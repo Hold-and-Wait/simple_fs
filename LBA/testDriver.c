@@ -8,6 +8,9 @@ int main() {
     testMBRFunction();  // Each one prints their respective sentences.
     testFSMFunction();
 
+    initializeDirectoryEntryTable();
+    expandDirectoryEntryTable(3);
+
     printf("\n");
     return 0;
 }
