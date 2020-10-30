@@ -9,7 +9,15 @@ int main() {
     testFSMFunction();
 
     initializeDirectoryEntryTable();
-    expandDirectoryEntryTable(3);
+
+    mkDir("TestDir1");
+    mkDir("DirectoryTest");
+
+    rmDir("DirectoryTest");
+
+    mkDir("TestDir2");
+
+    printDirectoryTable();
 
     printf("\n");
     return 0;
