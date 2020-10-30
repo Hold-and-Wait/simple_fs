@@ -9,13 +9,7 @@ int main() {
     testFSMFunction();
 
     initializeDirectoryEntryTable();
-
-    mkDir("TestDir1");
-    mkDir("DirectoryTest");
-
-    rmDir("DirectoryTest");
-
-    mkDir("TestDir2");
+    initializeInodeTable();
 
     printDirectoryTable();
 

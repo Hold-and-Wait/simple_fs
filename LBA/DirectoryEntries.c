@@ -24,9 +24,71 @@ int dir_index;
 struct inode_table * inodeTable;
 int inode_index;
 
+char * current_working_dir;
+
 void testDEFunction() {
     printf("Dir Entry Test\n");
 }
+
+/*
+ * *********** WORKING DIR MANAGEMENT ***********
+ */
+
+/*
+ * Tokenizes a string (i.e., 'root/path1/path2/file0')
+ *  into an array.
+ */
+void tokenizeDirectoryPath(char * file_path) {
+    /* TODO */
+    int slash_count = 0;
+    for (int i = 0; i < strlen(file_path); i++) {
+        if (strcmp(&file_path[i], "/") == 0) {
+            slash_count++;
+        }
+    }
+}
+
+
+/*
+ * Return: The current directory entry
+ */
+struct dir_entry getCurrentWorkingDirectory() {
+    /* TODO */
+    return dirEntry[-1];
+}
+
+/*
+ * Sets the working directory.
+ * Return:
+ *      0 : Successful change
+ *     -1 : Failure
+ */
+int setWorkingDirectory(char * path) {
+    /* TODO */
+    return 0;
+}
+
+
+/*
+ * *********** INODE TABLE ***********
+ */
+int inode_table_size;
+int initializeInodeTable() {
+    inode_table_size = 50;
+    inodeTable = malloc(sizeof(struct inode_table) * inode_table_size);
+
+    if (inodeTable == NULL) {
+        printf("FAILED to initialize inode table.\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+
+/*
+ * *********** Dir Entry TABLE ***********
+ */
 
 /*
  * Initializes directory entry table.
@@ -75,12 +137,12 @@ int expandDirectoryEntryTable(int num_entries) {
 
 /*
  * Makes a new folder.
- * Args: A file path.
+ * Args: A file path of new folder and the parent of the folder.
  * Return:
  *      0 : Successful creation of directory
  *     -1 : Failure
  */
-int mkDir(char * file_path) {
+int mkDir(char * file_path, char * parent_file) {
     int index_of_free_entry = 0;
 
     // expand directory table if not enough slots
@@ -89,9 +151,11 @@ int mkDir(char * file_path) {
     }
 
     for (int i = 0; i < dir_entry_size * sizeof(struct dir_entry); i+=sizeof(struct dir_entry)) {
-        if (dirEntry[i].self_inode == 0 && i != 0) { // Add directory entry to free slot (inode == 0)
+        if (dirEntry[i].self_inode == 0) { // Add directory entry to free slot (inode == 0)
             dirEntry[i].self_name = file_path;
             dirEntry[i].self_inode = inode_index;
+            //dirEntry[i].parent_inode = inode_index; <-- fix
+            dirEntry[i].parent_name = parent_file;
             printf("File %s (inode %d) has been created.\n", dirEntry[i].self_name, dirEntry[i].self_inode);
             inode_index++;
             return 0;
@@ -154,9 +218,10 @@ int rmDir(char * file_path) {
             printf("Removed %s (inode %d)\n", dirEntry[i].self_name, dirEntry[i].self_inode);
             dirEntry[i].self_name = NULL;
             dirEntry[i].self_inode = 0;
-            return 0;
+            break;
         }
     }
+
     printf("Could not remove %s. File not found\n", file_path);
     return -1;
 }
@@ -165,27 +230,8 @@ int rmDir(char * file_path) {
  * Prints directory table.
  */
 void printDirectoryTable() {
+    printf("** Directory Entry Table**\n");
     for (int i = 0; i < dir_entry_size * sizeof(struct dir_entry); i+=sizeof(struct dir_entry)) {
         printf("Index %lu:\tFile Name: %s, File inode: %d\n", i/sizeof(struct dir_entry), dirEntry[i].self_name, dirEntry[i].self_inode);
     }
-}
-
-
-/*
- * *********** INODE TABLE ***********
- */
-
-int initializeInodeTable() {
-    inodeTable = malloc(sizeof(struct inode_table) * 50);
-
-    if (inodeTable == NULL) {
-        printf("FAILED to initialize inode table.\n");
-        return -1;
-    }
-
-    return 0;
-}
-
-void mapInode(char * file_path, int inode) {
-
 }
