@@ -11,6 +11,7 @@ int initializeDirectoryEntryTable();
 int expandDirectoryEntryTable(int num_entries);
 int mkDir(char * file_path);
 int rmDir(char * file_path);
+struct dir_entry getDirectory(int inode);
 
 struct dir_files {
     char * self_name;
@@ -29,9 +30,11 @@ struct dir_entry {
 struct inode_table {
     char * file_name;
 
-    int * logical_blocks;
+    int month, day, year, hour, minute, second; // Date created/modified
     int inode;
 
-    struct dir_files * f; // array of files/folders within a directory.
+    int * logical_blocks; // array of block numbers that file occupies
+
+    struct dir_files * files_in_dir; // array of files/folders within a directory.
 };
 // END Directory Entry

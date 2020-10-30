@@ -11,6 +11,11 @@ int main() {
     initializeDirectoryEntryTable();
     expandDirectoryEntryTable(3);
 
+    mkDir("TestDir1");
+    mkDir("DirectoryTest");
+
+    printf("%s\n",getDirectory(2).self_name);
+
     printf("\n");
     return 0;
 }
