@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "../utils/stack.h"
 
 struct dir_entry * dirEntry;
 int dir_entry_size;
@@ -27,7 +27,7 @@ int inode_index;
 
 char * current_working_dir_path;
 struct dir_entry current_working_dir_entry;
-struct dir_files * dir_path_array; // Holds array of dir entries that current working directory is in.
+struct stack_util dir_path_stack; // Holds array of dir entries that current working directory is in.
 
 void testDEFunction() {
     printf("Dir Entry Test\n");
@@ -134,12 +134,10 @@ int initializeDirectoryEntryTable(char * root_file) {
         printf("FAILED to initialize Directory Entry Table.\n");
         return -1;
     }
-
+    dir_path_stack = create_stack(10);
     current_working_dir_path = root_file;
     mkDir(current_working_dir_path);
-    dir_path_array = malloc(sizeof(struct dir_files));
-    dir_path_array[0].self_name = getDirectoryEntry(root_file).self_name;    // add root dir to path array
-    dir_path_array[0].self_inode = getDirectoryEntry(root_file).self_inode;
+    stack_push(getDirectoryEntry(root_file).self_name, &dir_path_stack);// add root dir to path stack
     printf("Directory Entry Table is initialized. Root directory: %s\n", current_working_dir_path);
 
     return 0;
