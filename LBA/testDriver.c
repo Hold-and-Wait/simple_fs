@@ -8,8 +8,11 @@ int main() {
     testMBRFunction();  // Each one prints their respective sentences.
     testFSMFunction();
 
-    initializeDirectoryEntryTable();
+    initializeDirectoryEntryTable("root");
     initializeInodeTable();
+
+    mkDir("file1");
+    mkDir("file2");
 
     printDirectoryTable();
 

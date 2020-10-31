@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 struct dir_entry * dirEntry;
 int dir_entry_size;
 int dir_index;
@@ -24,7 +25,8 @@ int dir_index;
 struct inode_table * inodeTable;
 int inode_index;
 
-char * current_working_dir;
+char * current_working_dir_path;
+struct dir_entry current_working_dir_entry;
 
 void testDEFunction() {
     printf("Dir Entry Test\n");
@@ -50,7 +52,7 @@ void tokenizeDirectoryPath(char * file_path) {
 
 
 /*
- * Return: The current directory entry
+ * Return: The current directory entry.
  */
 struct dir_entry getCurrentWorkingDirectory() {
     /* TODO */
@@ -65,6 +67,7 @@ struct dir_entry getCurrentWorkingDirectory() {
  */
 int setWorkingDirectory(char * path) {
     /* TODO */
+    // Need a way to  verify that the passed in path is valid
     return 0;
 }
 
@@ -96,10 +99,10 @@ int initializeInodeTable() {
  *      0 : Successful initialization
  *     -1 : Failure
  */
-int initializeDirectoryEntryTable() {
+int initializeDirectoryEntryTable(char * root_file) {
     dir_entry_size = 50;
     dir_index = 0;
-    inode_index = 1;
+    inode_index = 1; // 0 means free. For some reason, I am unable to set inode value in dirEntry to -1.
     dirEntry = malloc(sizeof(struct dir_entry) * dir_entry_size);
 
     if (dirEntry == NULL) {
@@ -107,8 +110,9 @@ int initializeDirectoryEntryTable() {
         return -1;
     }
 
-
-    printf("Directory Entry Table is initialized.\n");
+    current_working_dir_path = root_file;
+    mkDir(current_working_dir_path);
+    printf("Directory Entry Table is initialized. Root directory: %s\n", current_working_dir_path);
 
     return 0;
 }
@@ -142,7 +146,7 @@ int expandDirectoryEntryTable(int num_entries) {
  *      0 : Successful creation of directory
  *     -1 : Failure
  */
-int mkDir(char * file_path, char * parent_file) {
+int mkDir(char * file_path) {
     int index_of_free_entry = 0;
 
     // expand directory table if not enough slots
@@ -154,10 +158,15 @@ int mkDir(char * file_path, char * parent_file) {
         if (dirEntry[i].self_inode == 0) { // Add directory entry to free slot (inode == 0)
             dirEntry[i].self_name = file_path;
             dirEntry[i].self_inode = inode_index;
-            //dirEntry[i].parent_inode = inode_index; <-- fix
-            dirEntry[i].parent_name = parent_file;
+            dirEntry[i].parent_name = current_working_dir_path;
+            dirEntry[i].parent_inode = getDirectoryEntry(current_working_dir_path).self_inode;
             printf("File %s (inode %d) has been created.\n", dirEntry[i].self_name, dirEntry[i].self_inode);
             inode_index++;
+
+            // test file
+            printf("FILE: %s, %d\n\tParent: %s, %d\n", getDirectoryEntry(file_path).self_name, getDirectoryEntry(file_path).self_inode,
+                   getDirectoryEntry(file_path).parent_name, getDirectoryEntry(file_path).parent_inode);
+
             return 0;
         }
     }

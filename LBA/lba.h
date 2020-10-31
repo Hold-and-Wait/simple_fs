@@ -7,10 +7,10 @@ void testFSMFunction();
 void testMBRFunction();
 
 // Directory Entry
-int initializeDirectoryEntryTable();
+int initializeDirectoryEntryTable(char * root_file);
 int initializeInodeTable();
 int expandDirectoryEntryTable(int num_entries);
-int mkDir(char * file_path, char * parent_file);
+int mkDir(char * file_path);
 int rmDir(char * file_path);
 struct dir_entry getDirectoryEntry(char * file_name);
 struct dir_entry getDirectoryEntry_node(int inode);
