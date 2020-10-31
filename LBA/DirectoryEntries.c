@@ -27,6 +27,7 @@ int inode_index;
 
 char * current_working_dir_path;
 struct dir_entry current_working_dir_entry;
+struct dir_files * dir_path_array; // Holds array of dir entries that current working directory is in.
 
 void testDEFunction() {
     printf("Dir Entry Test\n");
@@ -54,28 +55,52 @@ void tokenizeDirectoryPath(char * file_path) {
 /*
  * Return: The current directory entry.
  */
-struct dir_entry getCurrentWorkingDirectory() {
-    /* TODO */
+struct dir_entry getWorkingDirectory() {
+    if (current_working_dir_path != NULL) {
+        return getDirectoryEntry(current_working_dir_path);
+    }
     return dirEntry[-1];
 }
 
 /*
- * Sets the working directory.
+ * Sets the working directory. (Change directory)
  * Return:
  *      0 : Successful change
  *     -1 : Failure
  */
 int setWorkingDirectory(char * path) {
-    /* TODO */
-    // Need a way to  verify that the passed in path is valid
-    return 0;
+    // check absolute path (i.e., /root/file1/...)
+    if (strcmp(&path[0], "/") == 0) {
+
+    } else if (strcmp(&path[0], ".") == 0) { // . or ..
+
+    } else { // root/file1/.../
+
+    }
+    if (checkValidFile(path)) {
+        current_working_dir_path = path;
+        printf("Working directory set to %s.\n", current_working_dir_path);
+        return 0;
+    }
+
+    printf("File %s not found.\n", path);
+    return -1;
 }
 
 
 /*
  * *********** INODE TABLE ***********
  */
+
+
 int inode_table_size;
+
+/*
+ * Initializes inode table to 50 entries.
+ * Return:
+ *      0 : Successful initialization
+ *     -1 : Failure
+ */
 int initializeInodeTable() {
     inode_table_size = 50;
     inodeTable = malloc(sizeof(struct inode_table) * inode_table_size);
@@ -112,6 +137,9 @@ int initializeDirectoryEntryTable(char * root_file) {
 
     current_working_dir_path = root_file;
     mkDir(current_working_dir_path);
+    dir_path_array = malloc(sizeof(struct dir_files));
+    dir_path_array[0].self_name = getDirectoryEntry(root_file).self_name;    // add root dir to path array
+    dir_path_array[0].self_inode = getDirectoryEntry(root_file).self_inode;
     printf("Directory Entry Table is initialized. Root directory: %s\n", current_working_dir_path);
 
     return 0;
@@ -171,6 +199,22 @@ int mkDir(char * file_path) {
         }
     }
 
+    return 0;
+}
+
+/*
+ * Checks if a given file is valid.
+ * Args: A file name
+ * Return:
+ *      0 : Invalid file name, does not exist
+ *      1: Valid file name
+ */
+int checkValidFile(char * file_name) {
+    for (int i = 0; i < dir_entry_size * sizeof(struct dir_entry); i+=sizeof(struct dir_entry)) {
+        if (dirEntry[i].self_name != NULL && strcmp(dirEntry[i].self_name, file_name) == 0) {
+            return 1;
+        }
+    }
     return 0;
 }
 

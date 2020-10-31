@@ -12,8 +12,11 @@ int initializeInodeTable();
 int expandDirectoryEntryTable(int num_entries);
 int mkDir(char * file_path);
 int rmDir(char * file_path);
+int checkValidFile(char * file_name);
+int setWorkingDirectory(char * path);
 struct dir_entry getDirectoryEntry(char * file_name);
 struct dir_entry getDirectoryEntry_node(int inode);
+struct dir_entry getWorkingDirectory();
 
 void printDirectoryTable();
 

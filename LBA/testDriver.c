@@ -16,6 +16,9 @@ int main() {
 
     printDirectoryTable();
 
+    setWorkingDirectory("root");
+    setWorkingDirectory("root1");
+
     printf("\n");
     return 0;
 }
