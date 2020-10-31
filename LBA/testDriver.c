@@ -1,4 +1,5 @@
 #include "LBA/lba.h"
+#include "../utils/stack.h"
 #include <stdio.h>
 
 int main() {
@@ -18,6 +19,14 @@ int main() {
 
     setWorkingDirectory("root");
     setWorkingDirectory("root1");
+
+    struct stack_util stack = create_stack(10);
+    stack_push("AA", &stack);
+    stack_push("AA1", &stack);
+    stack_push("AA12", &stack);
+    printf("Peek: %s\n", stack_peek(&stack));
+    stack_pop(&stack);
+    printf("Peek: %s\n", stack_peek(&stack));
 
     printf("\n");
     return 0;

@@ -41,8 +41,8 @@ RUNOPTIONS=SampleVolume 10000000 512
 CC=gcc
 CFLAGS= -g -I.
 LIBS =pthread
-DEPS = LBA/lba.h
-ADDOBJ= LBA/DirectoryEntries.c LBA/FreeSpaceManagement.c LBA/MasterBootRecord.c
+DEPS = LBA/lba.h utils/stack.h
+ADDOBJ= LBA/DirectoryEntries.c LBA/FreeSpaceManagement.c LBA/MasterBootRecord.c utils/stack.c
 OBJ = $(ROOTNAME)$(HW)$(FOPTION).o $(ADDOBJ)
 
 %.o: %.c $(DEPS)
