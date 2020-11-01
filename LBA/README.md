@@ -32,7 +32,7 @@ To access the inode table, a function will be responsible for taking an inode nu
 * initializeDirectoryEntryTable
   * Initializes the directory entry table. It takes in a root directory name as an argument.
   * This root directory will point to itself, which is the definition of the root directory.
-*  mkDir
+* mkDir
   * Creates a directory.
   * This newly created directory will create a new entry in the directorey entry table. Its parent node will be the current directory's inode.
 * rmDir
