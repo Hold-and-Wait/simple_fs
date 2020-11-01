@@ -63,7 +63,7 @@ struct dir_entry getWorkingDirectory() {
  * Sets the working directory. (Change directory)
  * Return:
  *      0 : Successful change
- *     -1 : Failure
+ *      1 : File does not exist, create new directory
  */
 int setWorkingDirectory(char * path) {
     int is_absolute_path = 0;
@@ -77,17 +77,19 @@ int setWorkingDirectory(char * path) {
     char * file_name = strtok(path_temp, delim);
     while (file_name != NULL) {
 
-        if (!checkValidFile(file_name)) {
-            printf("File %s not found.\n", file_name);
-            return -1;
-        }
-
         // check absolute path (i.e., /root/file1/...)
         if (is_absolute_path) {
             while (stack_size(&dir_path_stack)  > 1) { // pop until root
                 stack_pop(&dir_path_stack);
+                current_working_dir_entry = getDirectoryEntry_node(stack_peek(&dir_path_stack));
             }
             is_absolute_path = 0;
+        }
+
+        // if file does not exist, create new directory
+        if (!checkValidFile(file_name)) {
+            mkDir(file_name);
+            return 1;
         }
 
         // . or ..
@@ -107,16 +109,13 @@ int setWorkingDirectory(char * path) {
             if (getDirectoryEntry(file_name).parent_inode == getWorkingDirectory().self_inode) {
                 current_working_dir_entry = getDirectoryEntry(file_name);
                 stack_push(getWorkingDirectory().self_inode, &dir_path_stack);
-            } else {
-                printf("\'%s\' is not a child of \'%s\'. Directory change not possible.\n", file_name, getWorkingDirectory().self_name);
-                return -1;
             }
-
         }
-        printf("Directory change to \'%s\'.\n", getDirectoryEntry_node(stack_peek(&dir_path_stack)).self_name);
         file_name = strtok(NULL, delim);
     }
-    return -1;
+
+    printf("Directory change to \'%s\'.\n", getDirectoryEntry_node(stack_peek(&dir_path_stack)).self_name);
+    return 0;
 }
 
 
@@ -224,6 +223,9 @@ int mkDir(char * file_name) {
                 stack_push(dirEntry[i].self_inode, &dir_path_stack);
                 is_entry_table_init = 1;
             }
+
+            // debug prints
+            printf("File created: %s %d\n\tParent: %d\n", dirEntry[i].self_name, dirEntry[i].self_inode, dirEntry[i].parent_inode);
             break;
         }
     }
@@ -239,7 +241,7 @@ int mkDir(char * file_name) {
  *      1: Valid file name
  */
 int checkValidFile(char * file_name) {
-    if (strcmp(file_name, ".") || strcmp(file_name, "..")) {
+    if (!strcmp(file_name, ".") || !strcmp(file_name, "..")) {
         return 1;
     }
     for (int i = 0; i < dir_entry_size * sizeof(struct dir_entry); i+=sizeof(struct dir_entry)) {
@@ -259,7 +261,6 @@ int checkValidFile(char * file_name) {
  *      - a null directory entry if file name does not exist
  */
 struct dir_entry getDirectoryEntry(char * file_name) {
-
     for (int i = 0; i < dir_entry_size * sizeof(struct dir_entry); i+=sizeof(struct dir_entry)) {
         if (dirEntry[i].self_name != NULL && strcmp(dirEntry[i].self_name, file_name) == 0) {
             return dirEntry[i];
@@ -297,7 +298,7 @@ struct dir_entry getDirectoryEntry_node(int inode) {
  *     -1 : Failure
  */
 int rmDir(char * file_path) {
-    /*TODO*/
+    /*TODO: Removing a directory with children should also remove children */
     for (int i = 0; i < dir_entry_size * sizeof(struct dir_entry); i+=sizeof(struct dir_entry)) {
         if (dirEntry[i].self_name != NULL && strcmp(dirEntry[i].self_name, file_path) == 0) {
             printf("Removed %s (inode %d)\n", dirEntry[i].self_name, dirEntry[i].self_inode);
@@ -315,12 +316,12 @@ int rmDir(char * file_path) {
  * Prints directory table.
  */
 void printDirectoryTable() {
-    printf("** Directory Entry Table**\n");
+    printf("\n** Directory Entry Table**\n");
     for (int i = 0; i < dir_entry_size * sizeof(struct dir_entry); i+=sizeof(struct dir_entry)) {
         if (dirEntry[i].self_name != NULL) {
-            printf("Index %lu: File Name: %s, File inode: %d\n", i / sizeof(struct dir_entry), dirEntry[i].self_name,
+            printf("Index %lu: File Name: %s, inode: %d\n", i / sizeof(struct dir_entry), dirEntry[i].self_name,
                    dirEntry[i].self_inode);
-            printf("\tParent: %d\n\n", dirEntry[i].parent_inode);
+            printf("\tParent inode: %d\n\n", dirEntry[i].parent_inode);
         }
     }
 }

@@ -17,9 +17,12 @@ int main() {
     mkDir("file2");
     mkDir("file3");
     setWorkingDirectory("file2");
-    mkDir("file09");
-    mkDir("file020");
+    mkDir("file4");
+    setWorkingDirectory("/file1/file3");
+    mkDir("file5");
 
+    // change directory to nonexistent file
+    setWorkingDirectory("/non_existent_file");
 
 
 

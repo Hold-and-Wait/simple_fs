@@ -44,11 +44,18 @@ struct dir_entry {
  */
 struct inode_table {
 
-    int month, day, year, hour, minute, second; // Date created/modified
-    int inode;
+    int month, day, year, hour, minute, second; // Date created/modified. Use built-in c function for time
+    int inode; // A unique inode number
+    int hard_link_count; // number of times another file references the same inode number (and logical_blocks)
+                         // ^ is this needed for our file system?
 
-    int * logical_blocks; // array of block numbers that the file occupies
+    int file_size;
+    char * file_type; // How would we manage this? maybe... if we have 'file.txt', take substring to the right of the
+                      // period and assign it to this variable.
+
+    int * logical_blocks; // array of block numbers that the file occupies (i.e., the root dir might occupy lba [2, 3, 4])
 
     struct dir_files * files_in_dir; // array of files/folders within a directory.
+                                     // ^ Probably would not need this portion since each entry has a parent node already.
 };
 // END Directory Entry

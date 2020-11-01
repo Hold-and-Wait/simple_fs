@@ -41,7 +41,6 @@ void stack_push(int content, struct stack_util * stack) {
 
     stack->contents[stack->current_size * sizeof(struct stack_contents)].data = content;
     stack->current_size++;
-    printf("Push %d.\n", content);
 }
 
 int stack_peek(struct stack_util * stack) {
@@ -52,7 +51,6 @@ int stack_pop(struct stack_util * stack) {
     stack->current_size--;
     int temp = stack->contents[stack->current_size * sizeof(struct stack_contents)].data;
     stack->contents[stack->current_size * sizeof(struct stack_contents)].data = 0;
-    printf("Pop %d.\n", temp);
     return temp;
 }
 
