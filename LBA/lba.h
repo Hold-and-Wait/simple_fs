@@ -29,8 +29,7 @@ struct dir_entry {
     char * self_name;   // .
     int self_inode;     // a unique inode number that maps filename to inode
 
-    char * parent_name; // ..
-    int parent_inode;
+    int parent_inode; // ..
 };
 
 
@@ -44,7 +43,6 @@ struct dir_entry {
  *  will be loaded onto memory only when needed.
  */
 struct inode_table {
-    char * file_name;
 
     int month, day, year, hour, minute, second; // Date created/modified
     int inode;

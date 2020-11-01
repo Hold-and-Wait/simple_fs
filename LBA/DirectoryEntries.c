@@ -56,10 +56,7 @@ void tokenizeDirectoryPath(char * file_path) {
  * Return: The current directory entry.
  */
 struct dir_entry getWorkingDirectory() {
-    if (current_working_dir_path != NULL) {
-        return getDirectoryEntry(current_working_dir_path);
-    }
-    return dirEntry[-1];
+    return current_working_dir_entry;
 }
 
 /*
@@ -69,21 +66,56 @@ struct dir_entry getWorkingDirectory() {
  *     -1 : Failure
  */
 int setWorkingDirectory(char * path) {
-    // check absolute path (i.e., /root/file1/...)
-    if (strcmp(&path[0], "/") == 0) {
-
-    } else if (strcmp(&path[0], ".") == 0) { // . or ..
-
-    } else { // root/file1/.../
-
-    }
-    if (checkValidFile(path)) {
-        current_working_dir_path = path;
-        printf("Working directory set to %s.\n", current_working_dir_path);
-        return 0;
+    int is_absolute_path = 0;
+    if (path[0] == '/') {
+        is_absolute_path = 1;
     }
 
-    printf("File %s not found.\n", path);
+    const char * delim = "/";
+    char path_temp[10000]; // temp array used for strtok
+    strcpy(path_temp, path);
+    char * file_name = strtok(path_temp, delim);
+    while (file_name != NULL) {
+
+        if (!checkValidFile(file_name)) {
+            printf("File %s not found.\n", file_name);
+            return -1;
+        }
+
+        // check absolute path (i.e., /root/file1/...)
+        if (is_absolute_path) {
+            while (stack_size(&dir_path_stack)  > 1) { // pop until root
+                stack_pop(&dir_path_stack);
+            }
+            is_absolute_path = 0;
+        }
+
+        // . or ..
+        if (strcmp(file_name, ".") == 0 || strcmp(file_name, "..") == 0) {
+            if (strcmp(file_name, "..") == 0) {
+                current_working_dir_entry = getDirectoryEntry_node(getWorkingDirectory().parent_inode);
+                if (stack_size(&dir_path_stack) > 1) { // prevents popping of root
+                    stack_pop(&dir_path_stack);
+                }
+            }
+        }
+
+        // root/file1/.../
+        else {
+
+            // check if requested directory change inode is a child of current directory
+            if (getDirectoryEntry(file_name).parent_inode == getWorkingDirectory().self_inode) {
+                current_working_dir_entry = getDirectoryEntry(file_name);
+                stack_push(getWorkingDirectory().self_inode, &dir_path_stack);
+            } else {
+                printf("\'%s\' is not a child of \'%s\'. Directory change not possible.\n", file_name, getWorkingDirectory().self_name);
+                return -1;
+            }
+
+        }
+        printf("Directory change to \'%s\'.\n", getDirectoryEntry_node(stack_peek(&dir_path_stack)).self_name);
+        file_name = strtok(NULL, delim);
+    }
     return -1;
 }
 
@@ -118,6 +150,7 @@ int initializeInodeTable() {
  * *********** Dir Entry TABLE ***********
  */
 
+int is_entry_table_init = 0;
 /*
  * Initializes directory entry table.
  * Return:
@@ -135,10 +168,9 @@ int initializeDirectoryEntryTable(char * root_file) {
         return -1;
     }
     dir_path_stack = create_stack(10);
-    current_working_dir_path = root_file;
-    mkDir(current_working_dir_path);
-    stack_push(getDirectoryEntry(root_file).self_name, &dir_path_stack);// add root dir to path stack
-    printf("Directory Entry Table is initialized. Root directory: %s\n", current_working_dir_path);
+    mkDir(root_file);
+    current_working_dir_entry = getDirectoryEntry(root_file);
+    printf("Directory Entry Table is initialized. Root directory: %s\n", current_working_dir_entry.self_name);
 
     return 0;
 }
@@ -172,7 +204,7 @@ int expandDirectoryEntryTable(int num_entries) {
  *      0 : Successful creation of directory
  *     -1 : Failure
  */
-int mkDir(char * file_path) {
+int mkDir(char * file_name) {
     int index_of_free_entry = 0;
 
     // expand directory table if not enough slots
@@ -182,18 +214,17 @@ int mkDir(char * file_path) {
 
     for (int i = 0; i < dir_entry_size * sizeof(struct dir_entry); i+=sizeof(struct dir_entry)) {
         if (dirEntry[i].self_inode == 0) { // Add directory entry to free slot (inode == 0)
-            dirEntry[i].self_name = file_path;
+            dirEntry[i].self_name = file_name;
             dirEntry[i].self_inode = inode_index;
-            dirEntry[i].parent_name = current_working_dir_path;
-            dirEntry[i].parent_inode = getDirectoryEntry(current_working_dir_path).self_inode;
-            printf("File %s (inode %d) has been created.\n", dirEntry[i].self_name, dirEntry[i].self_inode);
             inode_index++;
-
-            // test file
-            printf("FILE: %s, %d\n\tParent: %s, %d\n", getDirectoryEntry(file_path).self_name, getDirectoryEntry(file_path).self_inode,
-                   getDirectoryEntry(file_path).parent_name, getDirectoryEntry(file_path).parent_inode);
-
-            return 0;
+            dirEntry[i].parent_inode = getWorkingDirectory().self_inode;
+            if (!is_entry_table_init) {
+                dirEntry[i].parent_inode = dirEntry[i].self_inode;
+                current_working_dir_entry = dirEntry[i];
+                stack_push(dirEntry[i].self_inode, &dir_path_stack);
+                is_entry_table_init = 1;
+            }
+            break;
         }
     }
 
@@ -201,13 +232,16 @@ int mkDir(char * file_path) {
 }
 
 /*
- * Checks if a given file is valid.
+ * Checks if a given file is valid. (NOTE: '.' and '..' are both considered valid files!)
  * Args: A file name
  * Return:
  *      0 : Invalid file name, does not exist
  *      1: Valid file name
  */
 int checkValidFile(char * file_name) {
+    if (strcmp(file_name, ".") || strcmp(file_name, "..")) {
+        return 1;
+    }
     for (int i = 0; i < dir_entry_size * sizeof(struct dir_entry); i+=sizeof(struct dir_entry)) {
         if (dirEntry[i].self_name != NULL && strcmp(dirEntry[i].self_name, file_name) == 0) {
             return 1;
@@ -283,6 +317,10 @@ int rmDir(char * file_path) {
 void printDirectoryTable() {
     printf("** Directory Entry Table**\n");
     for (int i = 0; i < dir_entry_size * sizeof(struct dir_entry); i+=sizeof(struct dir_entry)) {
-        printf("Index %lu:\tFile Name: %s, File inode: %d\n", i/sizeof(struct dir_entry), dirEntry[i].self_name, dirEntry[i].self_inode);
+        if (dirEntry[i].self_name != NULL) {
+            printf("Index %lu: File Name: %s, File inode: %d\n", i / sizeof(struct dir_entry), dirEntry[i].self_name,
+                   dirEntry[i].self_inode);
+            printf("\tParent: %d\n\n", dirEntry[i].parent_inode);
+        }
     }
 }

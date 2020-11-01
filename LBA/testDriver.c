@@ -8,16 +8,25 @@ int main() {
     testMBRFunction();  // Each one prints their respective sentences.
     testFSMFunction();
 
+
     initializeDirectoryEntryTable("root");
     initializeInodeTable();
 
     mkDir("file1");
+    setWorkingDirectory("file1");
     mkDir("file2");
+    mkDir("file3");
+    setWorkingDirectory("file2");
+    mkDir("file09");
+    mkDir("file020");
+
+
+
+
+
+
 
     printDirectoryTable();
-
-    setWorkingDirectory("root");
-    setWorkingDirectory("root1");
 
     printf("\n");
     return 0;

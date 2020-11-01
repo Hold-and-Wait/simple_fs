@@ -34,24 +34,28 @@ void expand_stack(int size, struct stack_util * stack) {
     stack->contents = realloc(stack->contents, (stack->current_size + size) * sizeof(struct stack_contents));
 }
 
-void stack_push(char * content, struct stack_util * stack) {
+void stack_push(int content, struct stack_util * stack) {
     if (stack->current_size == stack->capacity) {
         expand_stack(10, stack);
     }
 
     stack->contents[stack->current_size * sizeof(struct stack_contents)].data = content;
     stack->current_size++;
-    printf("Push %s.\n", content);
+    printf("Push %d.\n", content);
 }
 
-char * stack_peek(struct stack_util * stack) {
+int stack_peek(struct stack_util * stack) {
     return stack->contents[(stack->current_size-1) * sizeof(struct stack_contents)].data;
 }
 
-char * stack_pop(struct stack_util * stack) {
+int stack_pop(struct stack_util * stack) {
     stack->current_size--;
-    char  * temp = stack->contents[stack->current_size * sizeof(struct stack_contents)].data;
-    stack->contents[stack->current_size * sizeof(struct stack_contents)].data = NULL;
-    printf("Pop %s.\n", temp);
+    int temp = stack->contents[stack->current_size * sizeof(struct stack_contents)].data;
+    stack->contents[stack->current_size * sizeof(struct stack_contents)].data = 0;
+    printf("Pop %d.\n", temp);
     return temp;
+}
+
+int stack_size(struct stack_util * stack) {
+    return stack->current_size;
 }
