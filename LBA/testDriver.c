@@ -18,6 +18,9 @@ int main() {
     fs_mkdir("file4", 2);
     fs_mkdir("file5", 2);
     print_table();
+    char * buf;
+    fs_getcwd(buf, 255);
+    printf("CWD: %s\n", buf);
 
 
     printf("\n**CHANGE DIRECTORY TO NONEXISTENT FILE \'/nonexistent_file0\'**\n");
@@ -30,6 +33,8 @@ int main() {
     fs_setcwd("/nonexistent_file1/nonexistent_file2");
     fs_mkdir("file7", 2);
     print_table();
+    fs_getcwd(buf, 255);
+    printf("CWD: %s\n", buf);
 
 
     printf("\n\t**CHANGE DIRECTORY TO \'..\'**\n");
@@ -42,7 +47,8 @@ int main() {
     fs_setcwd("/");
     fs_mkdir("file9", 2);
     print_table();
-
+    fs_getcwd(buf, 255);
+    printf("CWD: %s\n", buf);
 
 
     printf("\n");

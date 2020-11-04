@@ -27,6 +27,7 @@ int get_inode(char * path);
 fdDir get_directory_entry(char * path);
 
 struct stack_util current_directory_node;
+struct stack_util current_directory_node_cpy;
 struct fs_diriteminfo * dir_info;
 struct fs_stat * file_stat;
 fdDir * fd_table;
@@ -36,14 +37,19 @@ int inode_index;
 int dir_used_size;
 int dir_index;
 
+fdDir get_entry(int inode);
+
 void initializeDirectory() {
 
     fd_table = malloc(sizeof(fdDir) * DIRECTORY_ENTRY_SIZE);
     current_directory_node = create_stack(MAX_PATH);
+    current_directory_node_cpy = create_stack(MAX_PATH);
     file_stat = malloc(sizeof(struct fs_stat));
     inode_index = 0;
     dir_index = 0;
     dir_used_size = 0;
+
+    stack_push(200, &current_directory_node_cpy);
 
     // Create root
     stack_push(0, &current_directory_node);
@@ -67,6 +73,26 @@ int fs_mkdir(const char *pathname, mode_t mode) {
            fd_table[free_slot * sizeof(fdDir)].diriteminfo->inode, fd_table[free_slot * sizeof(fdDir)].diriteminfo->parent_inode);
     inode_index++;
     dir_used_size++;
+    return 0;
+}
+
+int fs_rmdir(const char *pathname) {
+    int is_absolute = 0;
+
+    if (pathname[0] == '/') {
+        is_absolute = 1;
+    }
+
+    char temp_path[strlen(pathname)];
+    strcpy(temp_path, pathname);
+
+    char * saveptr;
+    char * file_path = strtok_r(temp_path, "/", &saveptr);
+
+    while (file_path != NULL) {
+
+    }
+
     return 0;
 }
 
@@ -117,6 +143,40 @@ int fs_setcwd(char *buf) {
 }
 
 /*
+ * Returns a string of absolute path to current directory. Assumes buf is already allocated.
+ * Args:
+ *      buf :   the buffer that will be written on, contains absolute path
+ *      size:   Size of buffer
+ */
+char * fs_getcwd(char *buf, size_t size) {
+    int pos = 0;
+    buf[pos] = '/';
+    pos++;
+    while (stack_size(&current_directory_node) > 1) {
+        stack_push(stack_pop(&current_directory_node), &current_directory_node_cpy);
+    }
+
+    while (stack_size(&current_directory_node_cpy) > 1) {
+        int stack_val = stack_pop(&current_directory_node_cpy);
+        fdDir entry = get_entry(stack_val);
+        for (int i = 0; i < size; i++) {
+            buf[pos] = entry.diriteminfo->d_name[i];
+            if (entry.diriteminfo->d_name[i] == '\0') {
+                break;
+            }
+            pos++;
+        }
+
+        buf[pos++] = '/';
+        stack_push(stack_val, &current_directory_node); // return stack items back
+
+    }
+    buf[pos++] = '\0';
+
+    return  buf;
+}
+
+/*
  * Returns a directory entry given the path.
  * Return:
  *      - A directory entry
@@ -129,6 +189,11 @@ fdDir get_directory_entry(char * path) {
     strcpy(temp_path, path);
     char * saveptr1;
     char * file_path = strtok_r(temp_path, "/", &saveptr1);
+
+    while (file_path!= NULL) {
+
+        file_path = strtok_r(NULL, "/", &saveptr1);
+    }
 
 
 
@@ -193,6 +258,21 @@ int get_inode(char * path) {
         file_path = strtok(NULL, "/");
     }
     return ret_val;
+}
+
+/*
+ * Returns dir entry if inode is assigned to it.
+ */
+fdDir get_entry(int inode) {
+    for (int i = 0; i < dir_used_size * sizeof(fdDir); i += sizeof(fdDir)) {
+        fdDir temp = fd_table[i];
+        if (temp.diriteminfo->inode == inode) {
+            return fd_table[i];
+        }
+
+    }
+
+    return fd_table[-1];
 }
 
 /*
