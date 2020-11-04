@@ -1,3 +1,4 @@
+## (OUTDATE)
 # DIRECTORY ENTRY TABLE
 Author: Mark Jovero
 ## DIRECTORY ENTRIES

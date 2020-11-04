@@ -43,6 +43,14 @@ void stack_push(int content, struct stack_util * stack) {
     stack->current_size++;
 }
 
+void stack_copy(struct stack_util * dest, struct stack_util * src) {
+    *dest = create_stack(10);
+    for (int i = 0; i < stack_size(src); i++) {
+        printf("STACK TEST: %d\n", src->contents[i * sizeof(struct stack_contents)].data);
+        dest->contents[i * sizeof(struct stack_contents)].data = src->contents[i * sizeof(struct stack_contents)].data;
+    }
+}
+
 int stack_peek(struct stack_util * stack) {
     return stack->contents[(stack->current_size-1) * sizeof(struct stack_contents)].data;
 }

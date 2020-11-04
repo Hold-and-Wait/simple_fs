@@ -1,61 +1,79 @@
-// Should we combine all headers and function definitions for LBA here?
+#ifndef _MFS_H
+#define _MFS_H
+#include <sys/types.h>
+#include <unistd.h>
+#include <time.h>
 
-// Structs & Defs here
+#include "b_io.h"
 
-void testDEFunction();
-void testFSMFunction();
-void testMBRFunction();
+#include <dirent.h>
+#define FT_REGFILE	DT_REG
+#define FT_DIRECTORY DT_DIR
+#define FT_LINK	DT_LNK
 
-// Directory Entry
-int initializeDirectoryEntryTable(char * root_file);
-int initializeInodeTable();
-int expandDirectoryEntryTable(int num_entries);
-int mkDir(char * file_path);
-int rmDir(char * file_path);
-int checkValidFile(char * file_name);
-int setWorkingDirectory(char * path);
-struct dir_entry getDirectoryEntry(char * file_name);
-struct dir_entry getDirectoryEntry_node(int inode);
-struct dir_entry getWorkingDirectory();
+#ifndef uint64_t
+typedef u_int64_t uint64_t;
+#endif
+#ifndef uint32_t
+typedef u_int32_t uint32_t;
+#endif
 
-void printDirectoryTable();
 
-struct dir_files {
-    char * self_name;
-    int self_inode;
+// This will be stored in the LBA of the file?
+struct fs_diriteminfo
+{
+    int inode;
+    int parent_inode;
+
+    unsigned short d_reclen;    /* length of this record */
+    unsigned char fileType;
+    char d_name[256]; 			/* filename max filename is 255 characters */
 };
 
-struct dir_entry {
-    char * self_name;   // .
-    int self_inode;     // a unique inode number that maps filename to inode
 
-    int parent_inode; // ..
+typedef struct
+{
+    /*****TO DO:  Fill in this structure with what your open/read directory needs  *****/
+    unsigned short	dirEntryPosition;	/*which directory entry position, like file pos */
+    uint64_t	directoryStartLocation;		/*Starting LBA of directory */
+    struct fs_diriteminfo * diriteminfo;
+    int is_used;
+
+} fdDir;
+
+void initializeDirectory();
+void print_table();
+fdDir get_directory_entry(char * path);
+
+int fs_mkdir(const char *pathname, mode_t mode);
+int fs_rmdir(const char *pathname);
+fdDir * fs_opendir(const char *name);
+struct fs_diriteminfo *fs_readdir(fdDir *dirp);
+int fs_closedir(fdDir *dirp);
+
+char * fs_getcwd(char *buf, size_t size);
+int fs_setcwd(char *buf);   //linux chdir
+int fs_isFile(char * path);	//return 1 if file, 0 otherwise
+int fs_isDir(char * path);		//return 1 if directory, 0 otherwise
+int fs_delete(char* filename);	//removes a file
+
+
+
+struct fs_stat
+{
+    off_t     st_size;    		/* total size, in bytes */
+    blksize_t st_blksize; 		/* blocksize for file system I/O */
+    blkcnt_t  st_blocks;  		/* number of 512B blocks allocated */
+    time_t    st_accesstime;   	/* time of last access */
+    time_t    st_modtime;   	/* time of last modification */
+    time_t    st_createtime;   	/* time of last status change */
+
+    /* add additional attributes here for your file system */
+
+    int is_init;
+
 };
 
+int fs_stat(const char *path, struct fs_stat *buf);
 
-/*
- * Inodes will have a unique number. Not randomly generated, just incrementing
- *  by 1 when a file is created.
- *
- * Since the directory entry will most likely be loaded in memory most of
- *  the time, we do NOT want to fill the entry with too many information.
- *  Thus, it is best to keep that information in the inode table, which
- *  will be loaded onto memory only when needed.
- */
-struct inode_table {
-
-    int month, day, year, hour, minute, second; // Date created/modified. Use built-in c function for time
-    int inode; // A unique inode number
-    int hard_link_count; // number of times another file references the same inode number (and logical_blocks)
-                         // ^ is this needed for our file system?
-
-    int file_size;
-    char * file_type; // How would we manage this? maybe... if we have 'file.txt', take substring to the right of the
-                      // period and assign it to this variable.
-
-    int * logical_blocks; // array of block numbers that the file occupies (i.e., the root dir might occupy lba [2, 3, 4])
-
-    struct dir_files * files_in_dir; // array of files/folders within a directory.
-                                     // ^ Probably would not need this portion since each entry has a parent node already.
-};
-// END Directory Entry
+#endif
