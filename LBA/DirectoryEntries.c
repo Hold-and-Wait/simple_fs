@@ -37,6 +37,9 @@ int inode_index;
 int dir_used_size;
 int dir_index;
 
+// supports
+char * cwd_buf;
+
 fdDir get_entry(int inode);
 
 void initializeDirectory() {
@@ -48,6 +51,8 @@ void initializeDirectory() {
     inode_index = 0;
     dir_index = 0;
     dir_used_size = 0;
+
+    cwd_buf = malloc(256);
 
     stack_push(200, &current_directory_node_cpy);
 
@@ -69,7 +74,7 @@ int fs_mkdir(const char *pathname, mode_t mode) {
     fd_table[free_slot * sizeof(fdDir)].diriteminfo->d_reclen = 1;
     memcpy(fd_table[free_slot * sizeof(fdDir)].diriteminfo->d_name, pathname, strlen(pathname));
 
-    printf("mkDir: File: %s, inode: %d, parent: %d\n", fd_table[free_slot * sizeof(fdDir)].diriteminfo->d_name,
+    printf("FILE CREATED (mkDir): File: %s, inode: %d, parent: %d\n", fd_table[free_slot * sizeof(fdDir)].diriteminfo->d_name,
            fd_table[free_slot * sizeof(fdDir)].diriteminfo->inode, fd_table[free_slot * sizeof(fdDir)].diriteminfo->parent_inode);
     inode_index++;
     dir_used_size++;
@@ -107,7 +112,8 @@ int fs_setcwd(char *buf) {
         while (stack_size(&current_directory_node) > 1) {
             stack_pop(&current_directory_node);
         }
-        printf("Directory change to root.\n");
+        fs_getcwd(cwd_buf, 256);
+        printf("Directory change to \'%s\'\n", cwd_buf);
     }
 
 
@@ -121,6 +127,8 @@ int fs_setcwd(char *buf) {
         // '.' or '..'
         if (strcmp(file_path, "..") == 0) {
             stack_pop(&current_directory_node);
+            fs_getcwd(cwd_buf, 256);
+            printf("Directory change to \'%s\'\n", cwd_buf);
         } else if (strcmp(file_path, ".") == 0) {
             // do nothing?
         } else {
@@ -129,13 +137,14 @@ int fs_setcwd(char *buf) {
             int inode_child = get_inode(file_path);
             if (inode_child >= 0) {
                 stack_push(inode_child, &current_directory_node);
+                fs_getcwd(cwd_buf, 256);
+                printf("Directory change to \'%s\'\n", cwd_buf);
             } else { // File does not exist in directory, make a new file and change directory to it
                 fs_mkdir(file_path, 0);
                 fs_setcwd(file_path);
             }
         }
 
-        printf("Directory change to %s\n", file_path);
         file_path = strtok_r(NULL, "/", &saveptr);
     }
 
@@ -171,7 +180,7 @@ char * fs_getcwd(char *buf, size_t size) {
         stack_push(stack_val, &current_directory_node); // return stack items back
 
     }
-    buf[pos++] = '\0';
+    buf[pos++] = '\0'; // null terminate
 
     return  buf;
 }
@@ -252,7 +261,6 @@ int get_inode(char * path) {
             }
         }
         if (is_in_dir == 0) {
-            printf("%s does not exist.\n", file_path);
             return -1;
         }
         file_path = strtok(NULL, "/");
@@ -279,13 +287,85 @@ fdDir get_entry(int inode) {
  * Prints directory table
  */
 void print_table() {
-    printf("\n\t**** DIR TABLE ****\n");
+    printf("\n");
+    for (int i = 0; i < 42; i++) {
+        if (i >= 22 && i <= 34) {
+            if (i == 22) {
+                printf("[DIRECTORIES ENTRIES]");
+            }
+        }
+        printf("\u2588");
+    }
+    printf("\n\u2502\tFILE NAME\t \u2502\tINODE\t    \u2502   PARENT_INODE  \u2502\n");
+
+    for (int i = 0; i < 63; i++) {
+        if (i == 0) {
+            printf("\u251D");
+            continue;
+        }
+        if (i == 62) {
+            printf("\u2524");
+            continue;
+        }
+        if (i == 25 || i == 44) {
+            printf("\u253F");
+            continue;
+        }
+        printf("\u2501");
+    }
+
+    printf("\n");
+
     for (int i = 0; i < dir_used_size; i++) {
         fdDir temp = fd_table[i * sizeof(fdDir)];
+
         if (!temp.is_used)
             continue;
-        printf("File: %s, inode: %d, parent_inode: %d\n", temp.diriteminfo->d_name,
+        printf("\u2502  %21s \u2502     %08d     \u2502     %08d    \u2502\n", temp.diriteminfo->d_name,
                temp.diriteminfo->inode, temp.diriteminfo->parent_inode);
+
+        for (int j = 0; j < 63; j++) {
+            if (j == 0 && i == dir_used_size-1) {
+                printf("\u2514");
+                continue;;
+            }
+            if (j == 62 && i == dir_used_size-1) {
+                printf("\u2518");
+                continue;;
+            }
+
+            if ((j == 25 || j == 44) && i == dir_used_size-1) {
+                printf("\u2537");
+                continue;;
+            }
+
+
+            if (j == 62) {
+                printf("\u2524");
+                continue;
+            }
+            if (j == 0) {
+                printf("\u251D");
+                continue;
+            }
+
+            if (j == 25 || j == 44) {
+                printf("\u254B");
+                continue;
+            }
+            printf("\u2500");
+        }
+        printf("\n");
     }
-    printf("\t******************\n\n");
+
+}
+
+/*
+ * Frees mallocs
+ */
+void free_dir_mem() {
+    free(cwd_buf);
+    free(fd_table);
+    free(file_stat);
+    rm_stack();
 }

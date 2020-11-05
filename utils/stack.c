@@ -43,6 +43,10 @@ void stack_push(int content, struct stack_util * stack) {
     stack->current_size++;
 }
 
+void rm_stack() {
+    free(temp_stack);
+}
+
 struct stack_util stack_copy(struct stack_util * dest, struct stack_util * src) {
     *dest = create_stack(src->capacity);
 

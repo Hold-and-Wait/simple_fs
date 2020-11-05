@@ -43,6 +43,8 @@ typedef struct
 
 void initializeDirectory();
 void print_table();
+void free_dir_mem();
+
 fdDir get_directory_entry(char * path);
 
 int fs_mkdir(const char *pathname, mode_t mode);
