@@ -70,3 +70,9 @@ int stack_pop(struct stack_util * stack) {
 int stack_size(struct stack_util * stack) {
     return stack->current_size;
 }
+
+int empty_stack(struct stack_util * stack) {
+    while (stack_size(stack) > 0)
+        stack_pop(stack);
+    return stack_size(stack);
+}
