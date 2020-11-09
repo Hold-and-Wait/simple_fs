@@ -144,8 +144,6 @@ int fs_rmdir(const char *pathname) {
     char * saveptr;
     char * file_path = strtok_r(temp_path, "/", &saveptr);
 
-    fs_rmdir()
-
     file_path = strtok_r(NULL, "/", &saveptr);
 
    /*
