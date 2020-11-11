@@ -1,15 +1,15 @@
-/**************************************************************
- * Class:  CSC-415
- * Name: Jason Avina
- * Student ID: N/A
- * Project: Basic File System
- *
- * File: fsMBR.c
- * Description: This is the master boot record initialization
- * routine that also initializes the free space manager and
- * directory entries
- *
- **************************************************************
+//**************************************************************
+ // Class:  CSC-415
+ // Name: Jason Avina
+ // Student ID: N/A
+ // Project: Basic File System
+ //
+ // File: fsMBR.c
+ // Description: This is the master boot record initialization
+ // routine that also initializes the free space manager and
+ // directory entries
+//
+//**************************************************************
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -79,11 +79,10 @@ int initSuperBlock(char * filename, uint64_t * volSize, uint64_t * blockSize, st
 
 
 
-/*
- * Initializes bitmap vector
- * Writes bytes to hard drive
- *
- */
+
+//Initializes bitmap vector
+//Writes bytes to hard drive
+
 
 void initializeBitmapVecotr(uint64_t * volumeSize, uint64_t * blocksize, struct Bitvector * bitmap_vec){
 	int blockSize = *blocksize;
