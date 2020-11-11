@@ -25,7 +25,7 @@ typedef struct SuperBlock {
 } SuperBlock;
 
 
-//only new file i've created in the fsMBR.c file
+//This initializes the super block and if it doesn't exist, creates it
 int initSuperBlock(char * filename, uint64_t * volSize, uint64_t * blockSize, SuperBlock *sbPtr,  Bitvector * bitmap_vec);
 
 #endif
