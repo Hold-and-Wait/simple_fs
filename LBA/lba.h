@@ -77,6 +77,7 @@ struct fs_stat
 
     int is_init;
 
+
 };
 
 int fs_stat(const char *path, struct fs_stat *buf);

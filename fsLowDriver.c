@@ -26,7 +26,9 @@
 #include "fsLow.h"
 #include "bitmap_vector.h"
 #include "fsMBR.h"
+
 #include "LBA/lba.h"
+
 char *filename;
 /*
  *
@@ -45,7 +47,9 @@ int main (int argc, char *argv[]){
 			}
 	 */
 
+
 	// Used temprary
+
 	uint64_t blockSize;
 	uint64_t volumeSize;
 	filename = "simple_fs";
@@ -101,6 +105,7 @@ int main (int argc, char *argv[]){
     fs_getcwd(buf_dir, 100);
     printf("DIRECTORY: %s", buf_dir);
     print_table();
+
 
 
 

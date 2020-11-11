@@ -309,6 +309,19 @@ int get_free_directory() {
     return slot;
 }
 
+struct dir_entry getDirectory(int inode) {
+    char * file_name = NULL;
+
+    for (int i = 0; i < dir_entry_size * sizeof(struct dir_entry); i+=sizeof(struct dir_entry)) {
+        if (dirEntry[i].self_inode == inode) {
+            return dirEntry[i];
+        }
+    }
+
+    return dirEntry[0];
+}
+
+
 /*
  * Returns the inode in the CURRENT directory.
  * Return:
