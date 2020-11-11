@@ -1,3 +1,15 @@
+/**************************************************************
+ * Class:  CSC-415
+ * Name: Jason Avina
+ * Student ID: N/A
+ * Project: Basic File System
+ *
+ * File: fsMBR.h
+ *
+ * Description: This is the master boot record aka superblock
+ * initialization header file
+ **************************************************************
+
 #ifndef FS_MBR_H
 #define FS_MBR_H
 #include <sys/types.h>
