@@ -7,6 +7,8 @@
 #include "b_io.h"
 
 #include <dirent.h>
+#include "../bitmap_vector.h"
+
 #define FT_REGFILE	DT_REG
 #define FT_DIRECTORY DT_DIR
 #define FT_LINK	DT_LNK
@@ -41,7 +43,7 @@ typedef struct
 
 } fdDir;
 
-void initializeDirectory();
+void initializeDirectory(Bitvector * vec);
 void print_table();
 void free_dir_mem();
 

@@ -35,15 +35,15 @@
 
 #
 ## UNCOMMENT BELOW TO TEST DIRECTORY ENTRY
-ROOTNAME=LBA/testDriver
+ROOTNAME=fsLowDriver
 HW=
 FOPTION=
 RUNOPTIONS=SampleVolume 10000000 512
 CC=gcc
 CFLAGS= -g -I.
 LIBS =pthread
-DEPS = LBA/lba.h utils/stack.h
-ADDOBJ= LBA/DirectoryEntries.c LBA/FreeSpaceManagement.c LBA/MasterBootRecord.c utils/stack.c
+DEPS =
+ADDOBJ= fsLow.o bitmap_vector.o date.o fsMBR.o utils/stack.o LBA/DirectoryEntries.o
 OBJ = $(ROOTNAME)$(HW)$(FOPTION).o $(ADDOBJ)
 
 %.o: %.c $(DEPS)
@@ -54,6 +54,8 @@ $(ROOTNAME)$(HW)$(FOPTION): $(OBJ)
 
 clean:
 	rm *.o $(ROOTNAME)$(HW)$(FOPTION)
+	rm utils/stack.o
+	rm LBA/DirectoryEntries.o
 
 run: $(ROOTNAME)$(HW)$(FOPTION)
 	./$(ROOTNAME)$(HW)$(FOPTION) $(RUNOPTIONS)

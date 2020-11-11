@@ -20,11 +20,11 @@
 
 #define DIRECTORY_ENTRY_SIZE 50
 #define MAX_PATH 128
+#define DEFAULT_DIR_SIZE 10
 
 // Functions that do not need to be in header file
 int get_free_directory();
 int get_inode(const char * path, int is_absolute);
-fdDir get_directory_entry(char * path);
 
 struct stack_util current_directory_node;
 struct stack_util current_directory_node_cpy;
@@ -40,11 +40,12 @@ int dir_index;
 
 // supports
 char * cwd_buf;
+Bitvector * vector;
 
 fdDir get_entry(int inode);
 
-void initializeDirectory() {
-
+void initializeDirectory(Bitvector * vec) {
+    vector = vec;
     fd_table = malloc(sizeof(fdDir) * DIRECTORY_ENTRY_SIZE);
     current_directory_node = create_stack(MAX_PATH);
     current_directory_node_cpy = create_stack(MAX_PATH);
@@ -86,6 +87,7 @@ int fs_mkdir(const char *pathname, mode_t mode) {
     char * file_path = strtok_r(temp_path, "/", &saveptr);
     int file_exists = 0;
     int parent_node = 0;
+    int * contig_blocks = malloc(DEFAULT_DIR_SIZE * sizeof(int));
     while (file_path != NULL) {
         for (int i = 0; i < dir_used_size; i++) {
             fdDir temp = fd_table[i * sizeof(fdDir)];
@@ -98,7 +100,16 @@ int fs_mkdir(const char *pathname, mode_t mode) {
         if (!file_exists) {
             int free_slot = get_free_directory();
             // Call free space management here to assign the file/directory a slot/slots in lba array
+
+            get_free_blocks_index(vector, get_vector_size(vector), contig_blocks, DEFAULT_DIR_SIZE);
+            for (int i = 0; i < DEFAULT_DIR_SIZE; i++) {
+                //set_bit(vector, contig_blocks[i], 1);
+                //printf("--=-- %d, %d\n", contig_blocks[i], get_bit(vector, i));
+            }
+
+            fd_table[free_slot * sizeof(fdDir)].directoryStartLocation = contig_blocks[0];
             fd_table[free_slot * sizeof(fdDir)].diriteminfo = malloc(sizeof(fdDir));
+            fd_table[free_slot * sizeof(fdDir)].diriteminfo->d_reclen = DEFAULT_DIR_SIZE;
             fd_table[free_slot * sizeof(fdDir)].diriteminfo->inode = inode_index;
             fd_table[free_slot * sizeof(fdDir)].diriteminfo->parent_inode = stack_peek(&temp_stack);
             stack_push(inode_index, &temp_stack);
@@ -117,6 +128,7 @@ int fs_mkdir(const char *pathname, mode_t mode) {
 
     //fs_setcwd(cwd_temp_buf);
     free(cwd_temp_buf);
+    free(contig_blocks);
     return 0;
 }
 
@@ -209,7 +221,7 @@ int fs_setcwd(char *buf) {
                 fs_getcwd(cwd_buf, 256);
                 printf("Directory change to \'%s\'\n", cwd_buf);
             } else { // File does not exist in directory, make a new file and change directory to it
-                printf("%s is does not exist.\n", file_path);
+                printf("%s does not exist.\n", file_path);
                 return -1;
             }
         }
@@ -272,8 +284,6 @@ fdDir get_directory_entry(char * path) {
 
         file_path = strtok_r(NULL, "/", &saveptr1);
     }
-
-
 
     return fd_table[-1 * sizeof(fdDir)];
 }
@@ -372,12 +382,12 @@ fdDir get_entry(int inode) {
 void print_table() {
 
     printf("\n");
-    for (int i = 0; i < 44; i++) {
+    for (int i = 0; i < 58; i++) {
         if (i == 0) {
             printf("\u250F");
             continue;
         }
-        if (i == 43) {
+        if (i == 57) {
             printf("\u2513");
             continue;
         }
@@ -388,9 +398,9 @@ void print_table() {
         }
         printf("\u2501");
     }
-    printf("\n\u2503\tFILE_NAME\t \u2502\t INODE\t    \u2502   PARENT_INODE  \u2503\n");
+    printf("\n\u2503\tFILE_NAME\t \u2502\t INODE\t    \u2502   PARENT_INODE  \u2502   LBA_POS   \u2503\n");
 
-    for (int i = 0; i < 63; i++) {
+    for (int i = 0; i < 77; i++) {
 
         if (i == 0) {
             printf("\u2503");
@@ -398,6 +408,11 @@ void print_table() {
         }
 
         if (i == 62) {
+            printf("\u253F");
+            continue;
+        }
+
+        if (i == 76) {
             printf("\u2503");
             continue;
         }
@@ -417,26 +432,26 @@ void print_table() {
             continue;
         }
 
-        printf("\u2503  %21s \u2502     %08d     \u2502     %08d    \u2503\n", temp.diriteminfo->d_name,
-               temp.diriteminfo->inode, temp.diriteminfo->parent_inode);
+        printf("\u2503  %21s \u2502     %08d     \u2502     %08d    \u2502   %08ld  \u2503\n", temp.diriteminfo->d_name,
+               temp.diriteminfo->inode, temp.diriteminfo->parent_inode, (long)temp.directoryStartLocation);
 
-        for (int j = 0; j < 63; j++) {
+        for (int j = 0; j < 77; j++) {
             if (j == 0 && i == dir_used_size-1) {
                 printf("\u2517");
                 continue;;
             }
-            if (j == 62 && i == dir_used_size-1) {
+            if (j == 76 && i == dir_used_size-1) {
                 printf("\u251B");
                 continue;;
             }
 
-            if ((j == 25 || j == 44) && i == dir_used_size-1) {
+            if ((j == 25 || j == 44 || j == 62) && i == dir_used_size-1) {
                 printf("\u2537");
                 continue;;
             }
 
 
-            if (j == 62) {
+            if (j == 76) {
                 printf("\u2528");
                 continue;
             }
@@ -445,7 +460,7 @@ void print_table() {
                 continue;
             }
 
-            if (j == 25 || j == 44) {
+            if (j == 25 || j == 44 || j == 62) {
                 printf("\u253C");
                 continue;
             }
