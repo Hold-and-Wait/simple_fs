@@ -5,9 +5,9 @@
  * Project: Basic File System
  *
  * File: fsMBR.c
- *
- * Description: This is a demo to show how to use the fsLow
- * 	routines.
+ * Description: This is the master boot record initialization
+ * routine that also initializes the free space manager and
+ * directory entries
  *
  **************************************************************
 
