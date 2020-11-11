@@ -1,3 +1,4 @@
+
 //**************************************************************
  // Class:  CSC-415
  // Name: Jason Avina
@@ -10,6 +11,7 @@
  // directory entries
 //
 //**************************************************************
+
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -79,9 +81,11 @@ int initSuperBlock(char * filename, uint64_t * volSize, uint64_t * blockSize, st
 
 
 
-
-//Initializes bitmap vector
-//Writes bytes to hard drive
+/*
+ * Initializes bitmap vector
+ * Writes bytes to hard drive
+ *
+ */
 
 
 void initializeBitmapVecotr(uint64_t * volumeSize, uint64_t * blocksize, struct Bitvector * bitmap_vec){

@@ -1,3 +1,4 @@
+
 /**************************************************************
  * Class:  CSC-415
  * Name: Jason Avina
@@ -37,7 +38,9 @@ typedef struct SuperBlock {
 } SuperBlock;
 
 
-//This initializes the super block and if it doesn't exist, creates it
+
+//only new file i've created in the fsMBR.c file
+
 int initSuperBlock(char * filename, uint64_t * volSize, uint64_t * blockSize, SuperBlock *sbPtr,  Bitvector * bitmap_vec);
 
 #endif

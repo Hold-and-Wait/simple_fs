@@ -26,6 +26,9 @@
 #include "fsLow.h"
 #include "bitmap_vector.h"
 #include "fsMBR.h"
+
+#include "LBA/lba.h"
+
 char *filename;
 /*
  *
@@ -44,7 +47,9 @@ int main (int argc, char *argv[]){
 			}
 	 */
 
-	// Used temprary 
+
+	// Used temprary
+
 	uint64_t blockSize;
 	uint64_t volumeSize;
 	filename = "simple_fs";
@@ -53,16 +58,22 @@ int main (int argc, char *argv[]){
 
 	 SuperBlock *sbPtr = malloc(blockSize);
 
-	 Bitvector *bitmap_vec  = malloc(blockSize);
+	 //Bitvector *bitmap_vec  = malloc(blockSize);
+    Bitvector *bitmap_vec  = create_bitvec(1024, 512);
+
+	 // Init directory entries
+
+	initializeDirectory(bitmap_vec);
 
 	int retVal = 0;
 	retVal = initSuperBlock(filename, &volumeSize, &blockSize, sbPtr, bitmap_vec); 	// Mounts volume and formats File System
-											// We may pass the directory pointer too so it gets initialized
-	
+											// We may pass the directory pointer too so it gets initialize
+
+
 
 	printf("\nLBA[1]:\n");
 	printf("SUPERBLOCK STATS:\n");
-	
+
 	printf("File Type (Magic NUmber): %s\n",   "Undefined");
 	printf("Volume Size: %d BYTES\n",  sbPtr->VOL_SIZE_IN_BYTES);
 	printf("MBR LBA Index Position: %d\n", 	sbPtr->MBR_LOCATION_IN_VOL);
@@ -78,7 +89,6 @@ int main (int argc, char *argv[]){
 	printf("Free space in blocks unit: %d blocks.\n\n", get_num_free_blocks(bitmap_vec));
 
 
-
 	// TESTING LBA
 	char * buf3 = malloc(513);
 	memset (buf3, 0, blockSize);
@@ -87,7 +97,14 @@ int main (int argc, char *argv[]){
 									     // LBA[0] will be used for the boot block
 
 
-
+    fs_mkdir("file1", 1);
+    fs_mkdir("file2", 1);
+    fs_setcwd("file1");
+    fs_mkdir("file3",1);
+    char * buf_dir = malloc(sizeof(char) * 100);
+    fs_getcwd(buf_dir, 100);
+    printf("DIRECTORY: %s", buf_dir);
+    print_table();
 
 
 
