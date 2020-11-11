@@ -24,48 +24,97 @@
 #include <math.h>
 #include <time.h>
 #include "fsLow.h"
-#include "mfs.h"
+#include "bitmap_vector.h"
+#include "fsMBR.h"
 
-int main (int argc, char *argv[])
-	{	
-	char * filename;
-	uint64_t volumeSize;
-	uint64_t blockSize;
-    int retVal;
-    
-	if (argc > 3)
-		{
+#include "LBA/lba.h"
+
+char *filename;
+/*
+ *
+ */
+int main (int argc, char *argv[]){
+
+	/*
+			if (argc > 3){
 		filename = argv[1];
 		volumeSize = atoll (argv[2]);
 		blockSize = atoll (argv[3]);
-		}
-	else
-		{
+	else {
 		printf ("Usage: fsLowDriver volumeFileName volumeSize blockSize\n");
 		return -1;
 		}
-		
-	retVal = startPartitionSystem (filename, &volumeSize, &blockSize);	
-	printf("Opened %s, Volume Size: %llu;  BlockSize: %llu; Return %d\n", filename, (ull_t)volumeSize, (ull_t)blockSize, retVal);
-	
-	char * buf = malloc(blockSize *2);
-	char * buf2 = malloc(blockSize *2);
-	memset (buf, 0, blockSize*2);
-	strcpy (buf, "Now is the time for all good people to come to the aid of their countrymen\n");
-	strcpy (&buf[blockSize+10], "Four score and seven years ago our fathers brought forth onto this continent a new nation\n");
-	LBAwrite (buf, 2, 0);
-	LBAwrite (buf, 2, 3);
-	LBAread (buf2, 2, 0);
-	if (memcmp(buf, buf2, blockSize*2)==0)
-		{
-		printf("Read/Write worked\n");
-		}
-	else
-		printf("FAILURE on Write/Read\n");
-		
-	free (buf);
-	free(buf2);
+			}
+	 */
+
+
+	// Used temprary
+
+	uint64_t blockSize;
+	uint64_t volumeSize;
+	filename = "simple_fs";
+	volumeSize = 1048576;
+	blockSize = 512;
+
+	 SuperBlock *sbPtr = malloc(blockSize);
+
+	 //Bitvector *bitmap_vec  = malloc(blockSize);
+    Bitvector *bitmap_vec  = create_bitvec(1024, 512);
+
+	 // Init directory entries
+
+	initializeDirectory(bitmap_vec);
+
+	int retVal = 0;
+	retVal = initSuperBlock(filename, &volumeSize, &blockSize, sbPtr, bitmap_vec); 	// Mounts volume and formats File System
+											// We may pass the directory pointer too so it gets initialize
+
+
+
+	printf("\nLBA[1]:\n");
+	printf("SUPERBLOCK STATS:\n");
+
+	printf("File Type (Magic NUmber): %s\n",   "Undefined");
+	printf("Volume Size: %d BYTES\n",  sbPtr->VOL_SIZE_IN_BYTES);
+	printf("MBR LBA Index Position: %d\n", 	sbPtr->MBR_LOCATION_IN_VOL);
+	printf("Free Space Manager Index Position: %d, Length: %d\n", 2, 5);
+	printf("Volume Size (in sector units): %d\n", sbPtr->VOL_SIZE_IN_SECTORS);
+	printf("Available Free Space (in sector units): %d\n", sbPtr->AVAILABLE_BLOCKS);
+	printf("Directory Manager Index Position: %d, Length: %s\n", 8, "Undefined");
+	printf("Date Created: %s, Time: %s\n", sbPtr->DATE_ACCESSED, sbPtr->TIME_ACCESSED);
+
+	printf("\nLBA[2]:");
+	printf("\nBITVECTOR STATS:\n");
+	printf("Vector Size: %d blocks. \n", get_vector_size(bitmap_vec));
+	printf("Free space in blocks unit: %d blocks.\n\n", get_num_free_blocks(bitmap_vec));
+
+
+	// TESTING LBA
+	char * buf3 = malloc(513);
+	memset (buf3, 0, blockSize);
+	LBAread (buf3, 1, 0);
+	printf("\nLBA[3]: %d,  buf3* s = %s\n\n", (int)strlen(buf3), buf3 ); // Prints content located at LBA[0], remember this is juts a test
+									     // LBA[0] will be used for the boot block
+
+
+    fs_mkdir("file1", 1);
+    fs_mkdir("file2", 1);
+    fs_setcwd("file1");
+    fs_mkdir("file3",1);
+    char * buf_dir = malloc(sizeof(char) * 100);
+    fs_getcwd(buf_dir, 100);
+    printf("DIRECTORY: %s", buf_dir);
+    print_table();
+
+
+
+
+
+	free(buf3);
+	buf3 = NULL;
 	closePartitionSystem();
+
 	return 0;	
-	}
+}
+
 	

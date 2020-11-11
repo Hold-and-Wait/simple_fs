@@ -1,25 +1,8 @@
-#include "LBA/lba.h"
-#include <stdio.h>
-#include <stdlib.h>
+# README
 
-int main() {
-
-    printf("\n");
-
-    initializeDirectory();
-
-    fs_mkdir("use/mkdir/to/create/new/files", 0);
-    fs_setcwd("/use/setcwd/to/change/directories"); // <- will fail since setcwd is not an existing file!
-    print_table();
-
-    fs_rmdir("/use");
-
-    print_table();
-    return 0;
-}
-
-/* COPY AND PASTE TO MAKEFILE TO TEST DIRECTORY ENTRIES*/
-/*
+### Makefile to test the functions:
+Copy and paste rhe following code into your makefile folder.
+```
 ROOTNAME=LBA/testDriver
 HW=
 FOPTION=
@@ -42,4 +25,6 @@ clean:
 
 run: $(ROOTNAME)$(HW)$(FOPTION)
 	./$(ROOTNAME)$(HW)$(FOPTION) $(RUNOPTIONS)
- */
+  ```
+  
+ Then, type ```make run``` into your terminal.
