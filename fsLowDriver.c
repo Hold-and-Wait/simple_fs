@@ -60,10 +60,6 @@ int main (int argc, char *argv[]){
 	 // Init directory entries
 
 	initializeDirectory(bitmap_vec);
-    fs_mkdir("test", 1);
-    fs_mkdir("test2", 1);
-
-    print_table();
 
 	int retVal = 0;
 	retVal = initSuperBlock(filename, &volumeSize, &blockSize, sbPtr, bitmap_vec); 	// Mounts volume and formats File System
@@ -97,9 +93,10 @@ int main (int argc, char *argv[]){
 									     // LBA[0] will be used for the boot block
 
 
-
-    fs_mkdir("abcdef/ghijk", 1);
-    fs_setcwd("abcdef/ghijk");
+    fs_mkdir("file1", 1);
+    fs_mkdir("file2", 1);
+    fs_setcwd("file1");
+    fs_mkdir("file3",1);
     char * buf_dir = malloc(sizeof(char) * 100);
     fs_getcwd(buf_dir, 100);
     printf("DIRECTORY: %s", buf_dir);

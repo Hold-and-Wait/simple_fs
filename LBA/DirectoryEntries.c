@@ -188,7 +188,7 @@ int fs_rmdir(const char *pathname) {
  *      0 : Success
  *     -1 : Failure
  */
-int fs_setcwd(char *buf) {
+int fs_setcwd(char *buf) { // "/file2/file1"
     if (buf[0] == '/') { // Change to root
         while (stack_size(&current_directory_node) > 1) {
             stack_pop(&current_directory_node);

@@ -35,12 +35,13 @@ struct fs_diriteminfo
 
 typedef struct
 {
+
     /*****TO DO:  Fill in this structure with what your open/read directory needs  *****/
     unsigned short	dirEntryPosition;	/*which directory entry position, like file pos */
     uint64_t	directoryStartLocation;		/*Starting LBA of directory */
     struct fs_diriteminfo * diriteminfo;
     int is_used;
-
+//
 } fdDir;
 
 void initializeDirectory(Bitvector * vec);
