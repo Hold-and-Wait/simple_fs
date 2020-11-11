@@ -1,3 +1,16 @@
+/**************************************************************
+ * Class:  CSC-415
+ * Name: Jason Avina
+ * Student ID: N/A
+ * Project: Basic File System
+ *
+ * File: fsMBR.c
+ *
+ * Description: This is a demo to show how to use the fsLow
+ * 	routines.
+ *
+ **************************************************************
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
