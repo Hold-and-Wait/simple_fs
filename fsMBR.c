@@ -40,7 +40,7 @@ int NUM_OF_BLOCKS_IN_VOLUME;
 
 //Initialize Free Space Manager
 int initSuperBlock(char * filename, uint64_t * volSize, uint64_t * blockSize, SuperBlock *sbPtr,  Bitvector * bitmap_vec);
-
+void initializeBitmapVecotr(uint64_t * volumeSize, uint64_t *blocksize, Bitvector *bitmap_vec);
 
 //all functions should follow this pattern where they return 0 if success
 //and -1 if fails until we have checked every aspect of the file system
