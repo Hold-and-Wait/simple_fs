@@ -68,7 +68,6 @@ int main (int argc, char *argv[]){
 											// We may pass the directory pointer too so it gets initialize
 
 
-    initializeDirectory(bitmap_vec);
 
 	printf("\nLBA[1]:\n");
 	printf("SUPERBLOCK STATS:\n");
@@ -94,38 +93,14 @@ int main (int argc, char *argv[]){
 	LBAread (buf3, 1, 0);
 	printf("\nLBA[3]: %d,  buf3* s = %s\n\n", (int)strlen(buf3), buf3 ); // Prints content located at LBA[0], remember this is juts a test
 									     // LBA[0] will be used for the boot block
-
-    fs_mkdir("folder1",1, DT_DIR);
-    fs_mkdir("folder2",1, DT_DIR);
-    fs_setcwd("folder1");
-    fs_mkdir("child_folder3",1, DT_DIR);
-    fs_mkdir("child_file1",1, DT_REG);
-    fs_setcwd("../folder2");
-    fs_mkdir("child_file2",1, DT_REG);
-    fs_mkdir("folder4",1, DT_DIR);
-    fs_mkdir("../folder9",1, DT_DIR);
-    fs_mkdir("child_file3", 1, DT_REG);
-    fs_mkdir("/folder1/folder11", 1, DT_DIR);
-    fs_mkdir("/folder1/folder9", 1, DT_DIR);
-    fs_mkdir("/folder1/folder33", 1, DT_DIR);
-    fs_mkdir("/folder1/folder330", 1, DT_DIR);
-    fs_mkdir("/folder1/folder331", 1, DT_DIR);
-    fs_mkdir("/folder1/folder333", 1, DT_DIR);
-    fs_mkdir("/folder1/folder333/folder1", 1, DT_DIR);
-    fs_mkdir("/folder1/folder333/file1000", 1, DT_REG);
-    fs_mkdir("/folder1/folder333/file1001", 1, DT_REG);
-    fs_mkdir("/folder1/folder333/file1002", 1, DT_REG);
-    fs_mkdir("/folder1/folder80", 1, DT_DIR);
-    fs_mkdir("/folder_temp", 1, DT_DIR);
-    fs_mkdir("/csc415_grades", 1, DT_DIR);
-    fs_mkdir("/csc415_grades/jk", 1, DT_DIR);
-    print_table();
-
+    initializeDirectory(bitmap_vec, 7);
 
 
     free(buf3);
 	buf3 = NULL;
 	closePartitionSystem();
+
+	printf("\n");
 
 	return 0;	
 }

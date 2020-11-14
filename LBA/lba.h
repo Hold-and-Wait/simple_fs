@@ -21,37 +21,39 @@ typedef u_int32_t uint32_t;
 #endif
 
 
-// This will be stored in the LBA of the file?
+// metadata
 struct fs_diriteminfo
 {
+    int inode;
+    int parent_inode;
 
-    unsigned short d_reclen;    /* length of this record */
+    unsigned short d_reclen;    /* length of this record, aka total blocks it takes up */
+    unsigned int file_size;
     unsigned char fileType;
+    time_t    st_modtime;   // time modified
     char d_name[256]; 			/* filename max filename is 255 characters */
 };
 
 
 typedef struct
 {
-
     int inode;
     int parent_inode;
 
     /*****TO DO:  Fill in this structure with what your open/read directory needs  *****/
     unsigned short	dirEntryPosition;	/*which directory entry position, like file pos */
     uint64_t	directoryStartLocation;		/*Starting LBA of directory */
-    struct fs_diriteminfo * diriteminfo;
     int is_used;
 //
 } fdDir;
 
-void initializeDirectory(Bitvector * vec);
+void initializeDirectory(Bitvector * vec, int LBA_Pos);
 void print_table();
 void free_dir_mem();
 
 fdDir get_directory_entry(char * path);
 
-int fs_mkdir(const char *pathname, mode_t mode, int file_type);
+int fs_mkdir(char *pathname, mode_t mode, int file_type);
 int fs_rmdir(const char *pathname);
 fdDir * fs_opendir(const char *name);
 struct fs_diriteminfo *fs_readdir(fdDir *dirp);
