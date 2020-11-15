@@ -54,7 +54,7 @@ void free_dir_mem();
 fdDir get_directory_entry(char * path);
 
 int fs_mkdir(char *pathname, mode_t mode, int file_type);
-int fs_rmdir(const char *pathname);
+int fs_rmdir(char *pathname);
 fdDir * fs_opendir(const char *name);
 struct fs_diriteminfo *fs_readdir(fdDir *dirp);
 int fs_closedir(fdDir *dirp);
