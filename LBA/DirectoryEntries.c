@@ -37,7 +37,7 @@ int is_valid_dir(char * filename, struct stack_util dir_stack);
 void load_directory();
 
 // printing/debug
-char prefix[] = "\nDirectory Entry >> ";
+char prefix[] = "\n Directory Entry >> ";
 
 int LBA;
 
@@ -87,6 +87,8 @@ void initializeDirectory(Bitvector * vec, int LBA_Pos) {
     fd_table = malloc(sizeof(fdDir) * current_expansions * DIRECTORY_ENTRY_SIZE);
     dir_info = malloc(sizeof(struct fs_diriteminfo) * current_expansions * DIRECTORY_ENTRY_SIZE);
     load_directory();
+
+    printf("ISF: %d\n", fs_isFile("file3"));
 
     printDir();
 
@@ -490,7 +492,10 @@ fdDir * fs_opendir(const char *name) {
 
         }
     }
-    printf("%s opendir: Failed to open directory stream \'%s\'.", prefix, name);
+    cwd_buf = malloc(MAX_PATH);
+    fs_getcwd(cwd_buf, MAX_PATH);
+    printf("%s opendir: Failed to open directory stream \'%s\'. (Cause: may not exist or is not in cwd \'%s\')", prefix, name, cwd_buf);
+    free(cwd_buf);
     free(buf);
     return NULL;
 }
@@ -601,6 +606,13 @@ void load_directory() {
     printf("%s Successfully loaded %d directory entries.\n", prefix, dir_load_counter);
 }
 
+/*
+ * Determines whether a path/name is a file.
+ * A file is a textfile.
+ * Returns:
+ *      -1  :   Not a file or invalid name
+ *      >=0 :   The LBA (position + 1) of the file
+ */
 int fs_isFile(char * path) {
     struct stack_util cwd_temp;
     int dir_count = 0;
@@ -646,7 +658,7 @@ int fs_isFile(char * path) {
                         read_value = strtok_r(NULL, "=\n", &saveptr2);
                     }
                     if (strcmp(file_name, dir_name) == 0 && file_type[0] == 'R') {
-                        return 1;
+                        return entry->directoryStartLocation+1;
                     }
                     free(buf);
                 }
@@ -664,12 +676,12 @@ int fs_isFile(char * path) {
             }
 
             if (is_found == -1)
-                return 0;
+                return -1;
         }
         dir_name = strtok_r(NULL, "/", &saveptr);
     }
 
-    return 0;
+    return -1;
 }
 
 int fs_isDir(char * path) {
@@ -750,7 +762,7 @@ int fs_delete(char* filename) {
 
 void printDir() {
     char * buf = malloc(513);
-    printf("%s Directory Entries Table\n", prefix);
+    printf("%s Printing Directory Entries Table:\n", prefix);
 
     // PRINT TABLE HEADERS
     printf(" ");
