@@ -13,6 +13,8 @@
 #define FT_DIRECTORY DT_DIR
 #define FT_LINK	DT_LNK
 
+#define MAX_FILEPATH_SIZE 225
+
 #ifndef uint64_t
 typedef u_int64_t uint64_t;
 #endif
@@ -24,8 +26,6 @@ typedef u_int32_t uint32_t;
 // This will be stored in the LBA of the file?
 struct fs_diriteminfo
 {
-    int inode;
-    int parent_inode;
 
     unsigned short d_reclen;    /* length of this record */
     unsigned char fileType;
@@ -36,11 +36,15 @@ struct fs_diriteminfo
 typedef struct
 {
 
+    int inode;
+    int parent_inode;
+
     /*****TO DO:  Fill in this structure with what your open/read directory needs  *****/
     unsigned short	dirEntryPosition;	/*which directory entry position, like file pos */
     uint64_t	directoryStartLocation;		/*Starting LBA of directory */
     struct fs_diriteminfo * diriteminfo;
     int is_used;
+    int numChildren; // holds number of children in a DIR
 //
 } fdDir;
 
@@ -50,11 +54,12 @@ void free_dir_mem();
 
 fdDir get_directory_entry(char * path);
 
-int fs_mkdir(const char *pathname, mode_t mode);
+int fs_mkdir(const char *pathname, mode_t mode, int file_type);
 int fs_rmdir(const char *pathname);
 fdDir * fs_opendir(const char *name);
 struct fs_diriteminfo *fs_readdir(fdDir *dirp);
 int fs_closedir(fdDir *dirp);
+int getLBAPosition(char * filepath);
 
 char * fs_getcwd(char *buf, size_t size);
 int fs_setcwd(char *buf);   //linux chdir
@@ -76,7 +81,6 @@ struct fs_stat
     /* add additional attributes here for your file system */
 
     int is_init;
-
 
 };
 
