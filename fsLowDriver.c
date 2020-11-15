@@ -95,6 +95,13 @@ int main (int argc, char *argv[]){
 									     // LBA[0] will be used for the boot block
     initializeDirectory(bitmap_vec, 7);
 
+    fs_setcwd("dir3/dir1001");
+    fs_setcwd("..");
+
+    print_dir();
+
+    offload_configs();
+
 
     free(buf3);
 	buf3 = NULL;

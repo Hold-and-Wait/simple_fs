@@ -30,9 +30,7 @@
 // Functions that do not need to be in header file
 int check_is_init();
 void load_configs(char * buf_file_p1);
-void offload_configs();
 fdDir * get_free_dir();
-void printDir();
 int is_valid_dir(char * filename, struct stack_util dir_stack);
 void load_directory();
 
@@ -87,13 +85,6 @@ void initializeDirectory(Bitvector * vec, int LBA_Pos) {
     fd_table = malloc(sizeof(fdDir) * current_expansions * DIRECTORY_ENTRY_SIZE);
     dir_info = malloc(sizeof(struct fs_diriteminfo) * current_expansions * DIRECTORY_ENTRY_SIZE);
     load_directory();
-
-    printf("ISF: %d\n", fs_isFile("file3"));
-
-    printDir();
-
-    offload_configs();
-
 }
 
 /*
@@ -140,7 +131,7 @@ void load_configs(char * buf_file_p1) {
 
         config_values = strtok_r(NULL, "\n", &saveptr);
     }
-    printf("%s Values loaded: inode_index=%d, dir_used_size=%d, current_expansions=%d", prefix, inode_index, dir_used_size, current_expansions);
+    printf("%s Values loaded into memory: inode_index=%d, dir_used_size=%d, current_expansions=%d", prefix, inode_index, dir_used_size, current_expansions);
 }
 
 /*
@@ -334,54 +325,77 @@ int fs_rmdir(char *pathname) {
 
 int fs_setcwd(char *path) {
 
+    //
+    int dir_counter = 0;
+    for (int i = 0; i < strlen(path); i++) {
+        if (path[i] == '/')
+            dir_counter++;
+    }
+
+    if (path[strlen(path)] == '/')
+        dir_counter--;
+
     // check absolute
     if (path[0] == '/') {
+        dir_counter--;
         while (stack_size(&cwd_stack) > 0)
             stack_pop(&cwd_stack);
     }
 
     char * saveptr;
-    char * dir_name = strtok_r(path, "/", &saveptr);
+    char * test = malloc(strlen(path));
+    strcpy(test, path);
+    char * dir_name = strtok_r(test, "/", &saveptr);
 
     while (dir_name != NULL) {
-        // account for ..
-        if (strcmp(dir_name, "..") == 0)
+
+
+        if (strcmp(dir_name, "..") == 0) {
             stack_pop(&cwd_stack);
-        else if (strcmp(dir_name, ".") == 0) {
+            char * buf = malloc(MAX_PATH);
+            fs_getcwd(buf, MAX_PATH);
+            printf("%s setcwd: Successful change directory to %s.", prefix, buf);
+            free(buf);
+            dir_name = strtok_r(NULL, "/", &saveptr);
+            continue;
+        }
 
-        } else {
-            fdDir * entry = fd_table;
-            int is_found = 0;
-            for (int i = 0; i < current_expansions * DIRECTORY_ENTRY_SIZE; i++, entry++) {
-                if (entry->is_used) {
-                    char * buf = malloc(513);
-                    LBAread(buf, 1, entry->directoryStartLocation);
-                    char * saveptr2;
-                    char * kv_pair = strtok_r(buf, "=\n", &saveptr2);
-                    while (kv_pair != NULL) {
-                        if (strstr(kv_pair, "file_name") != NULL) {
-                            kv_pair = strtok_r(NULL, "=\n", &saveptr2);
-                            if (strcmp(kv_pair, dir_name) == 0 && entry->parent_inode == stack_peek(&cwd_stack)) {
-                                stack_push(entry->inode, &cwd_stack);
-                                is_found = 1;
-                                printf("%s setcwd: Directory change to %s.\n", prefix, dir_name);
-                                break;
-                            }
-                        }
-                        kv_pair = strtok_r(NULL, "=\n", &saveptr2);
+
+        int is_found = 0;
+        fdDir * entry = fd_table;
+        for (int i = 0; i < current_expansions * DIRECTORY_ENTRY_SIZE; i++, entry++) {
+            if (!entry->is_used)
+                continue;
+
+            // check valid
+            struct fs_diriteminfo * dirinfo = fs_readdir(entry);
+            if (strcmp(dir_name, dirinfo->d_name) == 0 && fs_isDir(dir_name) == 1) {
+                if (dir_counter == 0) { // at destination path
+                    if (entry->parent_inode == stack_peek(&cwd_stack)) {
+                        stack_push(entry->inode, &cwd_stack);
+                        char * buf = malloc(MAX_PATH);
+                        fs_getcwd(buf, MAX_PATH);
+                        printf("%s setcwd: Successful change directory to %s.", prefix, buf);
+                        free(buf);
+                        return 1;
                     }
-                    free(buf);
-                }
-
-
-                if (is_found == 0) { // we
-                    printf("%s setcwd: Unable to change directory. \'%s\' not found.\n", prefix, dir_name);
-                    return -1;
+                } else {
+                    if (entry->parent_inode == stack_peek(&cwd_stack)) {
+                        stack_push(entry->inode, &cwd_stack);
+                        is_found = 1;
+                        dir_counter--;
+                    }
                 }
             }
         }
+        if (is_found == 0) {
+            printf("%s setcwd: Error. \'%s\' was not found. Cause: It is not a valid directory or it is not in path.", prefix, dir_name);
+            return 0;
+        }
         dir_name = strtok_r(NULL, "/", &saveptr);
     }
+
+
     return 0;
 }
 
@@ -396,33 +410,24 @@ char * fs_getcwd(char *buf, size_t size) {
     int pos = 0;
     buf[pos] = '/';
     pos++;
-    fdDir * tableptr = fd_table;
     char * read_buf = malloc(513);
 
-    while (stack_size(&reverse_cwd) > 1) {
+    while (stack_size(&reverse_cwd) > 0) {
+        fdDir * tableptr = fd_table;
         int node = stack_pop(&reverse_cwd);
         int lba_loc = 0;
 
-        if (tableptr->is_used == 1) {
-            lba_loc = tableptr->directoryStartLocation;
-            LBAread(read_buf, 1, lba_loc);
-            // get name
-            char * file_name;
-            char * saveptr;
-            char * file_desc = strtok_r(read_buf, "=\n", &saveptr);
-            while (file_desc != NULL) {
+        if (node == 0) {
+            tableptr++;
+            continue;
+        }
+        while (tableptr->inode != node)
+            tableptr++;
 
-                if (strstr(file_desc, "file_name") != NULL) {
-                    file_desc = strtok_r(NULL, "=\n", &saveptr);
-                    file_name = malloc(strlen(file_desc));
-                    strcpy(file_name, file_desc);
-                    break;
-                }
-
-                file_desc = strtok_r(NULL, "=\n", &saveptr);
-            }
-            for (int i = 0; i < strlen(file_name); i++, pos++) {
-                buf[pos] = file_name[i];
+        if (tableptr->inode == node) {
+            struct fs_diriteminfo * dirinfo = fs_readdir(tableptr);
+            for (int i = 0; i < strlen(dirinfo->d_name); i++) {
+                buf[pos++] = dirinfo->d_name[i];
             }
             buf[pos++] = '/';
         }
@@ -572,7 +577,7 @@ fdDir * get_free_dir(){
 }
 
 void load_directory() {
-    printf("%s Loading directories from volume.", prefix);
+    printf("%s Loading directories from volume...", prefix);
     int dir_load_counter = 0;
     char * buf = malloc(513);
     for (int i = 0; i < vector_size; i++) {
@@ -603,7 +608,7 @@ void load_directory() {
         }
     }
     free(buf);
-    printf("%s Successfully loaded %d directory entries.\n", prefix, dir_load_counter);
+    printf("%s Successfully loaded %d directory entries from disk.", prefix, dir_load_counter);
 }
 
 /*
@@ -760,7 +765,7 @@ int fs_delete(char* filename) {
     return 0;
 }
 
-void printDir() {
+void print_dir() {
     char * buf = malloc(513);
     printf("%s Printing Directory Entries Table:\n", prefix);
 
@@ -844,7 +849,7 @@ void printDir() {
                 strcpy(file_type_long, "DIR");
             }
 
-            printf("\u2503 %18s\u2502   %08d   \u2502   %08d   \u2502   %08llu   \u2502   %08d   \u2502   %s   \u2503\n ",
+            printf("\u2503%18s \u2502   %08d   \u2502   %08d   \u2502   %08llu   \u2502   %08d   \u2502   %s   \u2503\n ",
                    file_name, entry->inode, entry->parent_inode, entry->directoryStartLocation, block_size, file_type_long);
 
 

@@ -47,9 +47,14 @@ typedef struct
 //
 } fdDir;
 
+// fdDir * a_directory = fs_opendir("file1");
+// int lba_pos = a_directory->directoryStartLocation;
+// b_open returns lba_pos+1 - lba_pos contains metadata, lba_pos+1 is the writable portion
+
 void initializeDirectory(Bitvector * vec, int LBA_Pos);
-void print_table();
+void print_dir();
 void free_dir_mem();
+void offload_configs();
 
 fdDir get_directory_entry(char * path);
 
