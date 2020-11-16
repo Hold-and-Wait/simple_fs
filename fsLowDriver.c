@@ -93,15 +93,19 @@ int main (int argc, char *argv[]){
 	LBAread (buf3, 1, 0);
 	printf("\nLBA[3]: %d,  buf3* s = %s\n\n", (int)strlen(buf3), buf3 ); // Prints content located at LBA[0], remember this is juts a test
 									     // LBA[0] will be used for the boot block
+
+	// TEST DIR
     initializeDirectory(bitmap_vec, 7);
 
-    fs_setcwd("dir3/dir1001");
-    fs_setcwd("..");
+    char * buf = malloc(256);
+    fs_getcwd(buf, 256);
+    printf("BUF: %s\n", buf);
+    printf(" \n-- %d --\n", is_valid_dir("dir1001"));
 
     print_dir();
 
     offload_configs();
-
+    // END TEST
 
     free(buf3);
 	buf3 = NULL;

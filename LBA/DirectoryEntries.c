@@ -31,7 +31,6 @@
 int check_is_init();
 void load_configs(char * buf_file_p1);
 fdDir * get_free_dir();
-int is_valid_dir(char * filename, struct stack_util dir_stack);
 void load_directory();
 
 // printing/debug
@@ -78,8 +77,6 @@ void initializeDirectory(Bitvector * vec, int LBA_Pos) {
         buf_file_p1 = "is_init=1\ninode_index=1\ndir_used_size=0\ncurrent_expansions=1\0";
         LBAwrite(buf_file_p1, 1, 7);
     }
-
-
 
     stack_push(0, &cwd_stack); // Sets the root directory
     fd_table = malloc(sizeof(fdDir) * current_expansions * DIRECTORY_ENTRY_SIZE);
@@ -408,8 +405,8 @@ char * fs_getcwd(char *buf, size_t size) {
     }
 
     int pos = 0;
-    buf[pos] = '/';
-    pos++;
+    //buf[pos] = '/';
+    //pos++;
     char * read_buf = malloc(513);
 
     while (stack_size(&reverse_cwd) > 0) {
@@ -421,6 +418,7 @@ char * fs_getcwd(char *buf, size_t size) {
             tableptr++;
             continue;
         }
+        buf[pos++] = '/';
         while (tableptr->inode != node)
             tableptr++;
 
@@ -429,7 +427,6 @@ char * fs_getcwd(char *buf, size_t size) {
             for (int i = 0; i < strlen(dirinfo->d_name); i++) {
                 buf[pos++] = dirinfo->d_name[i];
             }
-            buf[pos++] = '/';
         }
 
         tableptr++;
@@ -447,15 +444,14 @@ char * fs_getcwd(char *buf, size_t size) {
  *      1   :   Valid
  *      0   :   Invalid
  */
-int is_valid_dir(char * filename, struct stack_util dir_stack) {
-    fdDir entry;
-    for (int i = 0; i < current_expansions * DIRECTORY_ENTRY_SIZE; i++) {
-        if (fd_table[i * sizeof(fdDir)].is_used) {
-            entry = fd_table[i * sizeof(fdDir)];
-            if (entry.parent_inode == stack_pop(&dir_stack))
-                return 1;
-        }
+int is_valid_dir(char * filename) {
+    fdDir * dirp = fs_opendir(filename);
+    if (dirp != NULL) {
+
+        return 1;
+
     }
+
     return 0;
 }
 
