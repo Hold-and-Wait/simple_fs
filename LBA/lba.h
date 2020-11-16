@@ -21,38 +21,45 @@ typedef u_int32_t uint32_t;
 #endif
 
 
-// This will be stored in the LBA of the file?
+// metadata
 struct fs_diriteminfo
 {
+    int inode;
+    int parent_inode;
 
-    unsigned short d_reclen;    /* length of this record */
+    unsigned short d_reclen;    /* length of this record, aka total blocks it takes up */
+    unsigned int file_size;
     unsigned char fileType;
+    time_t    st_modtime;   // time modified
     char d_name[256]; 			/* filename max filename is 255 characters */
 };
 
 
 typedef struct
 {
-
     int inode;
     int parent_inode;
 
     /*****TO DO:  Fill in this structure with what your open/read directory needs  *****/
     unsigned short	dirEntryPosition;	/*which directory entry position, like file pos */
     uint64_t	directoryStartLocation;		/*Starting LBA of directory */
-    struct fs_diriteminfo * diriteminfo;
     int is_used;
 //
 } fdDir;
 
-void initializeDirectory(Bitvector * vec);
-void print_table();
+// fdDir * a_directory = fs_opendir("file1");
+// write, a_directory->dirEntryPosition += count;
+
+void initializeDirectory(Bitvector * vec, int LBA_Pos);
+void print_dir();
 void free_dir_mem();
+void offload_configs();
+int is_valid_dir(char * filename);
 
 fdDir get_directory_entry(char * path);
 
-int fs_mkdir(const char *pathname, mode_t mode, int file_type);
-int fs_rmdir(const char *pathname);
+int fs_mkdir(char *pathname, mode_t mode, int file_type);
+int fs_rmdir(char *pathname); // todo
 fdDir * fs_opendir(const char *name);
 struct fs_diriteminfo *fs_readdir(fdDir *dirp);
 int fs_closedir(fdDir *dirp);
@@ -60,7 +67,7 @@ int getLBAPosition(char * filepath);
 
 char * fs_getcwd(char *buf, size_t size);
 int fs_setcwd(char *buf);   //linux chdir
-int fs_isFile(char * path);	//return 1 if file, 0 otherwise
+int fs_isFile(char * path);	//return >=0 lba position of the file, -1 otherwise
 int fs_isDir(char * path);		//return 1 if directory, 0 otherwise
 int fs_delete(char* filename);	//removes a file
 
