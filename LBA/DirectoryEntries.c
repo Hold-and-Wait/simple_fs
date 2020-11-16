@@ -813,6 +813,7 @@ void print_dir() {
     fdDir * entry = fd_table;
     for (int i = 0; i < current_expansions * DIRECTORY_ENTRY_SIZE; i++, entry++) {
         if (entry->is_used) {
+
             char * buf = malloc(512);
             LBAread(buf, 1, entry->directoryStartLocation);
 

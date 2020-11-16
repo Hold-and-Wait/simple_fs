@@ -26,7 +26,7 @@
 #include "fsLow.h"
 #include "bitmap_vector.h"
 #include "fsMBR.h"
-
+#include "b_io.h"
 #include "LBA/lba.h"
 
 char *filename;
@@ -96,14 +96,11 @@ int main (int argc, char *argv[]){
 
 	// TEST DIR
     initializeDirectory(bitmap_vec, 7);
-    fs_setcwd("dir3");
-    char * buf = malloc(256);
-    fs_getcwd(buf, 256);
-    printf("\n\nBUF: %s\n", buf);
-    printf(" \n-- %d --\n", is_valid_dir("dir1001"));
-
 
     print_dir();
+
+    //fs_mkdir("test1", 1, DT_DIR);
+    //b_open("dir3", O_CREAT | O_RDONLY);
 
     offload_configs();
     // END TEST
@@ -111,8 +108,6 @@ int main (int argc, char *argv[]){
     free(buf3);
 	buf3 = NULL;
 	closePartitionSystem();
-
-	printf("\n");
 
 	return 0;	
 }

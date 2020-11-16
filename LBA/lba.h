@@ -48,8 +48,7 @@ typedef struct
 } fdDir;
 
 // fdDir * a_directory = fs_opendir("file1");
-// int lba_pos = a_directory->directoryStartLocation;
-// b_open returns lba_pos+1 - lba_pos contains metadata, lba_pos+1 is the writable portion
+// write, a_directory->dirEntryPosition += count;
 
 void initializeDirectory(Bitvector * vec, int LBA_Pos);
 void print_dir();
@@ -60,7 +59,7 @@ int is_valid_dir(char * filename);
 fdDir get_directory_entry(char * path);
 
 int fs_mkdir(char *pathname, mode_t mode, int file_type);
-int fs_rmdir(char *pathname);
+int fs_rmdir(char *pathname); // todo
 fdDir * fs_opendir(const char *name);
 struct fs_diriteminfo *fs_readdir(fdDir *dirp);
 int fs_closedir(fdDir *dirp);
@@ -68,7 +67,7 @@ int getLBAPosition(char * filepath);
 
 char * fs_getcwd(char *buf, size_t size);
 int fs_setcwd(char *buf);   //linux chdir
-int fs_isFile(char * path);	//return 1 if file, 0 otherwise
+int fs_isFile(char * path);	//return >=0 lba position of the file, -1 otherwise
 int fs_isDir(char * path);		//return 1 if directory, 0 otherwise
 int fs_delete(char* filename);	//removes a file
 
