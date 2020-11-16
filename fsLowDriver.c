@@ -96,11 +96,12 @@ int main (int argc, char *argv[]){
 
 	// TEST DIR
     initializeDirectory(bitmap_vec, 7);
-
+    fs_setcwd("dir3");
     char * buf = malloc(256);
     fs_getcwd(buf, 256);
-    printf("BUF: %s\n", buf);
+    printf("\n\nBUF: %s\n", buf);
     printf(" \n-- %d --\n", is_valid_dir("dir1001"));
+
 
     print_dir();
 

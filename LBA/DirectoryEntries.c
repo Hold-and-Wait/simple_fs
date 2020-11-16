@@ -246,6 +246,7 @@ int fs_mkdir(char *pathname, mode_t mode, int file_type) {
             printf("%s mkdir: Metadata for %s(%d) written to LBA %llu", prefix, dir_name, inode_index, newDir->directoryStartLocation);
             free(dirent);
             inode_index++;
+            dir_used_size++;
 
             char * buf2 = malloc(512);
             LBAread(buf2, 1, newDir->directoryStartLocation);
@@ -413,12 +414,12 @@ char * fs_getcwd(char *buf, size_t size) {
         fdDir * tableptr = fd_table;
         int node = stack_pop(&reverse_cwd);
         int lba_loc = 0;
-
         if (node == 0) {
             tableptr++;
+            buf[pos++] = '/';
             continue;
         }
-        buf[pos++] = '/';
+
         while (tableptr->inode != node)
             tableptr++;
 
@@ -427,6 +428,7 @@ char * fs_getcwd(char *buf, size_t size) {
             for (int i = 0; i < strlen(dirinfo->d_name); i++) {
                 buf[pos++] = dirinfo->d_name[i];
             }
+            buf[pos++] = '/';
         }
 
         tableptr++;
@@ -566,10 +568,9 @@ fdDir * get_free_dir(){
 
     //  expand
     current_expansions++;
-    fd_table = realloc(fd_table, current_expansions * DIRECTORY_ENTRY_SIZE);
-    dir_info = realloc(dir_info, current_expansions * DIRECTORY_ENTRY_SIZE);
-
-    return dirptr;
+    fd_table = realloc(fd_table, sizeof(fdDir) * current_expansions * DIRECTORY_ENTRY_SIZE);
+    dir_info = realloc(dir_info, sizeof(struct fs_diriteminfo) * current_expansions * DIRECTORY_ENTRY_SIZE);
+    return get_free_dir();
 }
 
 void load_directory() {
