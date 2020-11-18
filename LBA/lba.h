@@ -29,8 +29,9 @@ struct fs_diriteminfo
 
     unsigned short d_reclen;    /* length of this record, aka total blocks it takes up */
     unsigned int file_size;
-    unsigned char fileType;
-    time_t    st_modtime;   // time modified
+    char fileType;
+    char *    st_mod_time;   // time modified
+    char *    st_create_time;   // time modified
     char d_name[256]; 			/* filename max filename is 255 characters */
 };
 
@@ -54,6 +55,7 @@ void initializeDirectory(Bitvector * vec, int LBA_Pos);
 void print_dir();
 void free_dir_mem();
 void offload_configs();
+int dirent_check_is_init();
 int is_valid_dir(char * filename);
 
 fdDir get_directory_entry(char * path);

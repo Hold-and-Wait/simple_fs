@@ -95,13 +95,32 @@ int main (int argc, char *argv[]){
 									     // LBA[0] will be used for the boot block
 
 	// TEST DIR
-    initializeDirectory(bitmap_vec, 7);
+    //initializeDirectory(bitmap_vec, 7);
+
+
+    //int loc = b_open("file_00", O_CREAT | O_RDONLY);
+    //fs_setcwd("dir_01/dir_02/dir_03/dir_09");
+    //int number_x = b_open("file_8", O_CREAT | O_RDONLY);
+    //printf("\n%d\n", fs_setcwd("/dir_01/dir_02"));
+    //fs_mkdir("dir_19", 1, DT_DIR);
+    fdDir * dirp = fs_opendir("dir_19");
+    struct fs_diriteminfo * dirent = fs_readdir(dirp);
+    printf("\n%s\n", dirent->st_create_time);
+
+
+    char * bufl = malloc(513);
+    LBAread(bufl, 1, 177);
+    printf("BUF: %s\n", bufl);
+    free(bufl);
+
+    char * buf0 = malloc(128);
+    fs_getcwd(buf0, 128);
+    printf("\n\tcwd: %s.", buf0);
+    free(buf0);
+
+    //fs_rmdir("dir_00");
 
     print_dir();
-
-    //fs_mkdir("test1", 1, DT_DIR);
-    //b_open("dir3", O_CREAT | O_RDONLY);
-
     offload_configs();
     // END TEST
 
