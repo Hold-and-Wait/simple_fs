@@ -45,7 +45,7 @@ struct fs_diriteminfo *fs_readdir(fdDir *dirp){
   return &directoryEntry;
     
 }
-struct mfs_dirent* mfs_readdir(fdDir *dirp) {
+struct fs_dirent* fs_readdir(fdDir *dirp) {
 }
 
 int fs_closedir(fdDir *dirp){
