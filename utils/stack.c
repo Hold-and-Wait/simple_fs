@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include "stack.h"
 #include <stdlib.h>
+#include <string.h>
 
 void test_test() {
     printf("!@#!@#!#\n");
@@ -49,9 +50,19 @@ void rm_stack() {
 
 struct stack_util stack_copy(struct stack_util * dest, struct stack_util * src) {
     *dest = create_stack(src->capacity);
+    struct stack_util temp = create_stack(src->capacity);
 
-    for (int i = 0; i < stack_size(src) * sizeof(struct stack_contents); i += sizeof(struct stack_contents)) {
+    while (stack_size(src) > 0) {
+        int n = stack_pop(src);
+        stack_push(n, &temp);
     }
+
+    while (stack_size(&temp) > 0) {
+        int n = stack_pop(&temp);
+        stack_push(n, src);
+        stack_push(n, dest);
+    }
+
 
     return * dest;
 }

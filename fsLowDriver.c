@@ -26,7 +26,7 @@
 #include "fsLow.h"
 #include "bitmap_vector.h"
 #include "fsMBR.h"
-
+#include "b_io.h"
 #include "LBA/lba.h"
 
 char *filename;
@@ -59,11 +59,9 @@ int main (int argc, char *argv[]){
 	 SuperBlock *sbPtr = malloc(blockSize);
 
 	 //Bitvector *bitmap_vec  = malloc(blockSize);
-    Bitvector *bitmap_vec  = create_bitvec(1024, 512);
+    Bitvector *bitmap_vec  = create_bitvec(volumeSize, blockSize);
 
 	 // Init directory entries
-
-	initializeDirectory(bitmap_vec);
 
 	int retVal = 0;
 	retVal = initSuperBlock(filename, &volumeSize, &blockSize, sbPtr, bitmap_vec); 	// Mounts volume and formats File System
@@ -96,21 +94,18 @@ int main (int argc, char *argv[]){
 	printf("\nLBA[3]: %d,  buf3* s = %s\n\n", (int)strlen(buf3), buf3 ); // Prints content located at LBA[0], remember this is juts a test
 									     // LBA[0] will be used for the boot block
 
+	// TEST DIR
+    initializeDirectory(bitmap_vec, 7);
 
-    fs_mkdir("file1", 1);
-    fs_mkdir("file2", 1);
-    fs_setcwd("file1");
-    fs_mkdir("file3",1);
-    char * buf_dir = malloc(sizeof(char) * 100);
-    fs_getcwd(buf_dir, 100);
-    printf("DIRECTORY: %s", buf_dir);
-    print_table();
+    print_dir();
 
+    //fs_mkdir("test1", 1, DT_DIR);
+    //b_open("dir3", O_CREAT | O_RDONLY);
 
+    offload_configs();
+    // END TEST
 
-
-
-	free(buf3);
+    free(buf3);
 	buf3 = NULL;
 	closePartitionSystem();
 
