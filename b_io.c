@@ -2,6 +2,13 @@
 #include "LBA/lba.h"
 #include "b_io.h"
 
+struct fd_table {
+    int inode;
+    fdDir * dir;
+};
+
+struct fd_table * fdTable;
+
 /*
  * Returns -1 if  file does not exist
  */

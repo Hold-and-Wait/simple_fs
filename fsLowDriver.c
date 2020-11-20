@@ -95,28 +95,34 @@ int main (int argc, char *argv[]){
 									     // LBA[0] will be used for the boot block
 
 	// TEST DIR
-    //initializeDirectory(bitmap_vec, 7);
+/*
+    fs_mkdir("directory_01", 1, DT_DIR);
+    fs_setcwd("directory_01");
+    fs_mkdir("directory_02", 1, DT_DIR);
+    fs_mkdir("directory_03", 1, DT_DIR);
+    fs_mkdir("directory_04", 1, DT_DIR);
+    fs_setcwd("directory_03");
+    fs_mkdir("directory_05", 1, DT_DIR);
+    b_open("file_01", O_CREAT);
+    b_open("file_02", O_CREAT);
+    fs_mkdir("directory_06", 1, DT_DIR);
+*/
+
+    //fs_setcwd("dir5");
+    //fs_mkdir("dir52", 1, DT_DIR);
+    //fs_mkdir("directory_05c2", 1, DT_DIR);
+    //fs_mkdir("dir4", 1, DT_DIR);
+    //fs_mkdir("dir7", 1, DT_DIR);
+    //fs_rmdir("dir4");
+    //printf("\n>>>>%d\n", fs_rmdir("directory_01"));
 
 
-    //int loc = b_open("file_00", O_CREAT | O_RDONLY);
-    //fs_setcwd("dir_01/dir_02/dir_03/dir_09");
-    //int number_x = b_open("file_8", O_CREAT | O_RDONLY);
-    //printf("\n%d\n", fs_setcwd("/dir_01/dir_02"));
-    //fs_mkdir("dir_19", 1, DT_DIR);
-    fdDir * dirp = fs_opendir("dir_19");
-    struct fs_diriteminfo * dirent = fs_readdir(dirp);
-    printf("\n%s\n", dirent->st_create_time);
 
+    //fs_mkdir("directory_03", 1, DT_DIR);
+    //b_open("file_00", O_CREAT);
+    //fs_setcwd("dir4");
+    //b_open("file_01", O_CREAT);
 
-    char * bufl = malloc(513);
-    LBAread(bufl, 1, 177);
-    printf("BUF: %s\n", bufl);
-    free(bufl);
-
-    char * buf0 = malloc(128);
-    fs_getcwd(buf0, 128);
-    printf("\n\tcwd: %s.", buf0);
-    free(buf0);
 
     //fs_rmdir("dir_00");
 

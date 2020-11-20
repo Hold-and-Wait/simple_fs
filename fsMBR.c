@@ -23,6 +23,7 @@
 #include "fsMBR.h"
 #include "bitmap_vector.h"
 #include "date.h"
+#include "LBA/lba.h"
 #ifndef uint64_t
 typedef u_int64_t uint64_t;
 #endif
@@ -56,6 +57,8 @@ int initSuperBlock(char * filename, uint64_t * volSize, uint64_t * blockSize, st
 	}
 
 	initializeBitmapVecotr(volSize, blockSize, bitmap_vec); 		// Initialize Free Space Manager
+
+	initializeDirectory(bitmap_vec, 7);
 
 	sbPtr->blockSize = *blockSize;
 	sbPtr->VOL_SIZE_IN_BYTES = *volSize;
