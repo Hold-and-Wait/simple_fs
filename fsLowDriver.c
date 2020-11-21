@@ -94,41 +94,8 @@ int main (int argc, char *argv[]){
 	printf("\nLBA[3]: %d,  buf3* s = %s\n\n", (int)strlen(buf3), buf3 ); // Prints content located at LBA[0], remember this is juts a test
 									     // LBA[0] will be used for the boot block
 
-	// TEST DIR
-/*
-    fs_mkdir("directory_01", 1, DT_DIR);
-    fs_setcwd("directory_01");
-    fs_mkdir("directory_02", 1, DT_DIR);
-    fs_mkdir("directory_03", 1, DT_DIR);
-    fs_mkdir("directory_04", 1, DT_DIR);
-    fs_setcwd("directory_03");
-    fs_mkdir("directory_05", 1, DT_DIR);
-    b_open("file_01", O_CREAT);
-    b_open("file_02", O_CREAT);
-    fs_mkdir("directory_06", 1, DT_DIR);
-*/
-
-    //fs_setcwd("dir5");
-    //fs_mkdir("dir52", 1, DT_DIR);
-    //fs_mkdir("directory_05c2", 1, DT_DIR);
-    //fs_mkdir("dir4", 1, DT_DIR);
-    //fs_mkdir("dir7", 1, DT_DIR);
-    //fs_rmdir("dir4");
-    //printf("\n>>>>%d\n", fs_rmdir("directory_01"));
-
-
-
-    //fs_mkdir("directory_03", 1, DT_DIR);
-    //b_open("file_00", O_CREAT);
-    //fs_setcwd("dir4");
-    //b_open("file_01", O_CREAT);
-
-
-    //fs_rmdir("dir_00");
-
     print_dir();
     offload_configs();
-    // END TEST
 
     free(buf3);
 	buf3 = NULL;

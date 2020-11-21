@@ -142,6 +142,27 @@ void offload_configs() {
     printf("%s Config values offloaded: inode_index=%d, dir_used_size=%d, current_expansions=%d", prefix, inode_index, dir_used_size, current_expansions);
 }
 
+int get_free_inode() {
+    int index_found = -1;
+    for (int i = 1; i <= inode_index; i++) {
+        fdDir * entry = fd_table;
+        for (int j = 0; j < current_expansions * DIRECTORY_ENTRY_SIZE; j++, entry++) {
+            if (entry->inode == i) {
+                index_found = -1;
+                break;
+            } else {
+                index_found = i;
+            }
+        }
+        if (index_found > 0)
+            break;
+    }
+    if (index_found == -1) {
+        index_found = inode_index++;
+    }
+    return  index_found;
+}
+
 /*
  *  Create a directory entry.
  *  Return:
@@ -327,6 +348,16 @@ int fs_rmdir(char *pathname) {
         rm_helper(entry);
         entry->is_used = 0;
 
+        struct fs_diriteminfo * dir_info = fs_readdir(entry);
+
+        // free up the bit
+        int bit_start = entry->directoryStartLocation;
+        int bit_end = bit_start + dir_info->d_reclen;
+
+        for (int i = bit_start; i < bit_end; i++) {
+            set_bit(vector, i, 0);
+        }
+
         // Free up the LBA metadata
         char * empty_buf = malloc(512);
         LBAwrite(empty_buf, 1, entry->directoryStartLocation);
@@ -347,6 +378,17 @@ int rm_helper(fdDir * dir_stream) {
         if (entry->is_used && entry->parent_inode == dir_stream->inode) {
             printf("Removing %d\n", entry->inode);
             rm_helper(entry);
+
+            struct fs_diriteminfo * dir_info = fs_readdir(entry);
+
+            // free up the bit
+            int bit_start = entry->directoryStartLocation;
+            int bit_end = bit_start + dir_info->d_reclen;
+
+            for (int j = bit_start; j < bit_end; j++) {
+                set_bit(vector, j, 0);
+            }
+
             entry->is_used = 0;
             char * empty_buf = malloc(512);
             LBAwrite(empty_buf, 1, entry->directoryStartLocation);
@@ -470,15 +512,38 @@ char * fs_getcwd(char *buf, size_t size) {
  *      1   :   Valid
  *      0   :   Invalid
  */
-int is_valid_dir(char * filename) {
-    fdDir * dirp = fs_opendir(filename);
-    if (dirp != NULL) {
+int is_valid_dir(char * path, char * new_dir_name) {
+    struct stack_util path_tracker;
 
-        return 1;
+    if (path[0] != '/')
+        stack_copy(&path_tracker, &cwd_stack);
+    else
+        path_tracker = create_stack(stack_size(&cwd_stack));
 
+    char temp_path[strlen(path)];
+    strcpy(temp_path, path);
+    char * saveptr;
+    char * dir_name = strtok_r(temp_path, "/", &saveptr);
+    char * dir;
+
+    while (dir_name != NULL) {
+        dir = dir_name;
+        int found_directory = 0;
+        fdDir * entry_item = fd_table;
+        for (int i = 0; i < current_expansions * DIRECTORY_ENTRY_SIZE; i++, entry_item++) {
+            struct fs_diriteminfo * dirent = fs_readdir(entry_item);
+            if (strcmp(dir_name, dirent->d_name) == 0) {
+                found_directory  = 1;
+                break;
+            }
+        }
+        memcpy(new_dir_name, dir_name, strlen(dir_name)+1);
+
+        dir_name = strtok_r(NULL, "/", &saveptr);
+        if (dir_name != NULL && !found_directory)
+            return 0;
     }
-
-    return 0;
+    return 1;
 }
 
 int recurse = 0;
@@ -688,10 +753,19 @@ void load_directory() {
             loadDir->dirEntryPosition = 512;
 
             // set proper bits -> delete this portion when bitmap saving is implemented
+            /*
             int blocks_to_alloc[block_len];
             int * blocks = get_free_blocks_index(vector, blocks_to_alloc, block_len);
             for (int i = 0; i < block_len; i++) {
                 set_bit(vector, blocks[i], 1);
+            }*/
+
+            // free up the bit
+            int bit_start = i;
+            int bit_end = bit_start + block_len;
+
+            for (int j = bit_start; j < bit_end; j++) {
+                set_bit(vector, j, 1);
             }
             // end
 
@@ -929,10 +1003,15 @@ void print_dir() {
                 strcpy(file_type_long, "DIR");
             }
 
-            printf("\u2503%18s \u2502   %08d   \u2502   %08d   \u2502   %08llu   \u2502   %08d   \u2502   %s   \u2503\n ",
-                   file_name, entry->inode, entry->parent_inode, entry->directoryStartLocation, block_size, file_type_long);
+            char * file_name_trunc = malloc(18);
+            if (strlen(file_name) > 15) {
+                snprintf(file_name, 18, "%.14s...", file_name);
+            }
 
+            printf("\u2503%18.*s \u2502   %08d   \u2502   %08d   \u2502   %08llu   \u2502   %08d   \u2502   %s   \u2503\n ",
+                   18,file_name, entry->inode, entry->parent_inode, entry->directoryStartLocation, block_size, file_type_long);
 
+            free(file_name_trunc);
             free(buf);
         }
     }
@@ -959,3 +1038,8 @@ void print_dir() {
     free(buf);
 }
 
+int fs_stat(const char *path, struct fs_stat *buf) {
+    char * temp_path = strcpy(temp_path, path);
+
+    return 0;
+}

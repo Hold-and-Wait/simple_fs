@@ -56,7 +56,8 @@ void print_dir();
 void free_dir_mem();
 void offload_configs();
 int dirent_check_is_init();
-int is_valid_dir(char * filename);
+int is_valid_dir(char * path, char * new_dir_name);
+int get_free_inode();
 
 fdDir get_directory_entry(char * path);
 
