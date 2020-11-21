@@ -180,7 +180,11 @@ int reset_local_vars(b_io_fd f_descriptor){
 
 
 /*
- *
+ * Reads Nodes from LinkedList
+ * Each Node stores 512 bytes of data in a pointer
+ * and int, which stores the actual length of the pointer, usuaaly 512 and less than 512 for the last node.
+ * Assigns L_BUFFER with the char value from current Node;
+ * And returns the the length of the pointer, usuaaly 512 and less than 512 for the last node.
  *
  */
 int reload_buffer(b_io_fd f_descriptor){
