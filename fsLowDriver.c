@@ -92,7 +92,8 @@ int main (int argc, char *argv[]){
 	memset (buf3, 0, blockSize);
 	LBAread (buf3, 1, 0);
 	printf("\nLBA[3]: %d,  buf3* s = %s\n\n", (int)strlen(buf3), buf3 ); // Prints content located at LBA[0], remember this is juts a test
-									     // LBA[0] will be used for the boot block
+
+
 
     print_dir();
     offload_configs();
