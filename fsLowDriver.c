@@ -11,7 +11,7 @@
 *
 **************************************************************/
 
-
+#include "LBA/lba.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -26,17 +26,13 @@
 #include "utils/stack.h"
 
 
-
 char *filename;
 /*
  *
  */
 int main (int argc, char *argv[]){
 
-	struct stack_util * stack = stack_create(10);
-	stack_push(10, stack);
 
-	printf("VAL %d\n", stack_peek(stack));
 	return 0;	
 }
 
