@@ -183,7 +183,7 @@ int get_free_inode() {
  */
 int fs_mkdir(char *pathname, mode_t mode, int file_type) {
     struct fs_diriteminfo * dirent = malloc(sizeof(struct fs_diriteminfo));
-    struct stack_util path_tracker = create_stack(10);
+    struct stack_util path_tracker;
 
     int dir_count = 0; // keeps track of '/'
     for (int i = 0; i < strlen(pathname); i++) {
@@ -193,10 +193,12 @@ int fs_mkdir(char *pathname, mode_t mode, int file_type) {
 
     // Check for absolute path
     if (pathname[0] == '/') {
+	path_tracker = create_stack(10);
         stack_push(0, &path_tracker);
         dir_count--;
     } else {
         stack_copy(&path_tracker, &cwd_stack);
+	printf("TEST TEST\n");
     }
     // Check if last is a /
     if (pathname[strlen(pathname)-1] == '/')

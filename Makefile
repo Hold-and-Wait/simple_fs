@@ -43,7 +43,7 @@ CC=gcc
 CFLAGS= -g -I.
 LIBS =pthread
 DEPS =
-ADDOBJ= fsLow.o bitmap_vector.o date.o fsMBR.o utils/stack.o LBA/DirectoryEntries.o b_io.o
+ADDOBJ= utils/stack.o fsLowDriver.o
 OBJ = $(ROOTNAME)$(HW)$(FOPTION).o $(ADDOBJ)
 
 %.o: %.c $(DEPS)

@@ -28,7 +28,7 @@ typedef struct Bitvector{
 /*
  *
  */
-Bitvector* create_bitvec(uint64_t n_bits, uint64_t blockSize);
+Bitvector* create_bitvec(u_int64_t n_bits, u_int64_t blockSize);
 int get_num_free_blocks(Bitvector *vec);
 void set_bit(Bitvector* vector, int index, int bit);
 int get_bit(Bitvector* vec, int index);

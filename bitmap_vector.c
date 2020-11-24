@@ -19,7 +19,7 @@
  * Allocates a pointer of type char with size = 2^n
  * Returns a pointer of type Bitvector
  */
-Bitvector* create_bitvec(uint64_t n_bits, uint64_t blockSize) {
+Bitvector* create_bitvec(u_int64_t n_bits, u_int64_t blockSize) {
 
 	Bitvector* vector = (Bitvector*)malloc(sizeof(Bitvector));
 	vector->avalible_blocks = 0;
