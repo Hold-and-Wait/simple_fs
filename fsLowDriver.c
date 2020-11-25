@@ -50,7 +50,7 @@ int main (int argc, char *argv[]){
 	int retVal = 0;
 	retVal = initSuperBlock(filename, &volumeSize, &blockSize, sbPtr, bitmap_vec); 	// Mounts volume and formats File System
 											// We may pass the directory pointer too so it gets initialize
-	dir_offload_configs();
+	//dir_offload_configs();
 	return 0;	
 }
 

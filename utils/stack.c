@@ -22,6 +22,7 @@ fs_stack * stack_create(int size) {
 	// Allocate content
 	new_stack->content = malloc(sizeof(int) * size);
 	new_stack->capacity = size;
+	new_stack->current_size = 0;
 	
 	return new_stack;
 }
@@ -45,7 +46,7 @@ fs_stack * stack_copy(fs_stack * src) {
 
 int stack_push(int value, fs_stack * stack) {
 	int * iter_ptr = stack->content;
-	
+
 	if (stack->current_size < stack->capacity) {
 		for (int i = 0; i < stack->current_size; i++, iter_ptr++);
 		*iter_ptr = value;
@@ -53,11 +54,14 @@ int stack_push(int value, fs_stack * stack) {
 		return value;
 	} else {
 		// expand
+		printf("%d %d\n", stack->capacity,  stack->current_size);
 		stack->capacity = stack->capacity * 2;
-		stack->content = realloc(stack->content, sizeof(int) * stack->capacity);
+        printf("%d %d\n", stack->capacity,  stack->current_size);
+
+        stack->content = realloc(stack->content, sizeof(int) * stack->capacity);
 		stack_push(value, stack);
 	}
-	
+
 	return -1;
 }
 

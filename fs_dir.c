@@ -46,20 +46,16 @@ int num_table_expansions = 1;
 void initializeDirectory(Bitvector * vec, int LBA_Pos) {
 	config_location = LBA_Pos;
 	bitmap = vec;
-	
+
 	// dir stack initialization
 	cwd_stack = stack_create(DEF_PATH_SIZE);
 	stack_push(0, cwd_stack);
 
-	if (dir_is_init()) {
-		dir_load_config();
-	}
-	
+
+
 	dir_table = malloc(sizeof(fdDir) * DEF_DIR_TABLE_SIZE * num_table_expansions);
-	
-	char * buf;
-	dir_is_valid_path("A/B/C", buf);
-	fdDir * dt = fs_opendir("ad");
+
+
 }
 
 int dir_is_init() {
