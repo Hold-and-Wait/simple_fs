@@ -27,6 +27,7 @@ void dir_table_expand();
 int dir_is_init();
 int dir_load_config();
 int dir_is_valid_path(char * path, char * dir);
+int dir_get_free_inode();
 //
 
 #define PREFIX "Directory >>"
@@ -58,6 +59,7 @@ void initializeDirectory(Bitvector * vec, int LBA_Pos) {
 	
 	char * buf;
 	fs_mkdir("ABC", DT_DIR);
+	fs_mkdir("AfdBCa", DT_DIR);
 
 
 }
@@ -225,16 +227,6 @@ int fs_mkdir(char *pathname, mode_t mode) {
 			f_slash_counter--;
 		} else {	// last component may be invalid -> create dir
 		
-			// Load into dir table
-			fdDir * dir_iter = dir_table;
-			for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, dir_iter++) {
-				if (dir_iter->is_used > 0)
-					continue;
-				
-				dir_iter->is_used = 1;
-				dir_iter->parent_inode = stack_peek(stack_path_temp);
-			}
-			
 			char * meta_write_buffer = malloc(513);
 			char fType[2] = "D\0";
 			
@@ -243,8 +235,25 @@ int fs_mkdir(char *pathname, mode_t mode) {
             		int * free_blocks = get_free_blocks_index(bitmap, fb_array, 1);
             		for (int i = 0; i < 1; ++i)
                 		set_bit(bitmap, free_blocks[i], 1);
+                		
+                	// Load into dir table
+			fdDir * dir_iter = dir_table;
+			for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, dir_iter++) {
+				if (dir_iter->is_used > 0)
+					continue;
+				
+				dir_iter->is_used = 1;
+				dir_iter->parent_inode = dir_get_free_inode();
+				dir_iter->parent_inode = stack_peek(stack_path_temp);
+				dir_iter->directoryStartLocation = free_blocks[i];
+				
+				return 1;
+			}
+			
+			//snprintf(meta_write_buffer, 513, "key=%s\nname=%s\ntype=%c\ninode=%d\npinode=%d\nsize=%d\nblen=%d\nmdate=%s\ncdate=%s\0",
+			//		meta_key);
+			
                 	
-                	//
                 	 
 			free(meta_write_buffer);
 		}
@@ -253,6 +262,32 @@ int fs_mkdir(char *pathname, mode_t mode) {
 	}
 	printf("%s mkdir error: undefined.\n", PREFIX);
 	return -1;
+}
+
+int dir_get_free_inode() {
+	int index_found = -1;
+	for (int i = 1; i <= inode_index; i++) {
+		fdDir * entry = dir_table;
+		for (int j = 0; j < num_table_expansions * DEF_DIR_TABLE_SIZE; j++, entry++) {
+			if (entry->inode == i) {
+				index_found = -1;
+				break;
+			} else {
+                		index_found = i;
+            		}
+        	}
+        	if (index_found > 0)
+            		break;
+    	}
+    	if (index_found == -1) {
+        	index_found = inode_index++;
+    	}
+    	if (index_found == 0) {
+    		index_found = dir_get_free_inode();
+    	}
+    	
+    	printf("!! %d\n", index_found);
+	return  index_found;
 }
 
 struct fs_diriteminfo * fs_readdir(fdDir *dirp) {
