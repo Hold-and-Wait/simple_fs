@@ -23,7 +23,7 @@
 #include "fsMBR.h"
 #include "bitmap_vector.h"
 #include "date.h"
-#include "LBA/lba.h"
+#include "mfs.h"
 #ifndef uint64_t
 typedef u_int64_t uint64_t;
 #endif

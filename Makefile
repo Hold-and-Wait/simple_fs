@@ -55,7 +55,6 @@ $(ROOTNAME)$(HW)$(FOPTION): $(OBJ)
 clean:
 	rm *.o $(ROOTNAME)$(HW)$(FOPTION)
 	rm utils/stack.o
-	rm LBA/DirectoryEntries.o
 
 run: $(ROOTNAME)$(HW)$(FOPTION)
 	./$(ROOTNAME)$(HW)$(FOPTION) $(RUNOPTIONS)
