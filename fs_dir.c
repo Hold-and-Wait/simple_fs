@@ -44,6 +44,7 @@ char meta_key[] = "!&92@&fbn1337_amX";
 
 int config_location;
 int inode_index;
+int dir_count = 0;
 int num_table_expansions = 1;
 
 void initializeDirectory(Bitvector * vec, int LBA_Pos) {
@@ -72,6 +73,8 @@ void initializeDirectory(Bitvector * vec, int LBA_Pos) {
 		LBAread(buf, 1, i);
 		printf("%d - %s\n", i, buf);
 	}
+	
+	fs_setcwd("file4");
 
 
 }
@@ -128,12 +131,6 @@ int dir_offload_configs() {
 	printf("%s Successfully offloaded config values into volume.\n", PREFIX);
 	free(config_write_buffer);
 	return 1;
-}
-
-int dir_load_dir_table() {
-
-
-    return -1;
 }
 
 // TODO
@@ -251,7 +248,10 @@ int fs_mkdir(char *pathname, mode_t mode) {
                 		
 			// Load into dir table
 			fdDir * dir_iter = dir_table;
-            struct fs_diriteminfo * dir_meta;
+			dir_count++;
+			if (dir_count > num_table_expansions * DEF_DIR_TABLE_SIZE)
+				dir_table_expand();
+            		struct fs_diriteminfo * dir_meta;
 			for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, dir_iter++) {
 				if (dir_iter->is_used > 0)
 					continue;
@@ -270,7 +270,6 @@ int fs_mkdir(char *pathname, mode_t mode) {
 			printf("mkdir: %s\n", dir_name);
            		LBAwrite(meta_write_buffer, 1, free_blocks[0]);
                 	
-                	 
 			free(meta_write_buffer);
 			return 1;
 		}
@@ -279,6 +278,110 @@ int fs_mkdir(char *pathname, mode_t mode) {
 	}
 	printf("%s mkdir error: undefined.\n", PREFIX);
 	return -1;
+}
+
+char * fs_getcwd(char *buf, size_t size) {
+	fs_stack * temp = stack_copy(cwd_stack);
+	fs_stack * reverse_cwd = stack_create(DEF_PATH_SIZE);
+	while (stack_size(temp) > 0)
+        	stack_push(stack_pop(temp), reverse_cwd);
+
+
+    	int pos = 0;
+    //buf[pos] = '/';
+    //pos++;
+    	char * read_buf = malloc(513);
+
+	while (stack_size(reverse_cwd) > 0) {
+        	fdDir * tableptr = dir_table;
+        	int node = stack_pop(reverse_cwd);
+        	int lba_loc = 0;
+        	if (node == 0) {
+            		tableptr++;
+           		continue;
+        	}
+
+        	buf[pos++] = '/';
+
+        	while (tableptr->inode != node)
+            		tableptr++;
+
+        	if (tableptr->inode == node) {
+            		struct fs_diriteminfo * dirinfo = fs_readdir(tableptr);
+            		for (int i = 0; i < strlen(dirinfo->d_name); i++) {
+                		buf[pos++] = dirinfo->d_name[i];
+            		}
+            //buf[pos++] = '/';
+        	}
+
+        	tableptr++;
+    	}
+    	
+    	buf[pos++] = '/';
+    	buf[pos++] = '\0'; // null terminator
+    	free(read_buf);
+    	return buf;
+}
+
+int fs_setcwd(char *path) {
+	if (path[0] == '/')
+        	while (stack_size(cwd_stack) > 1)
+           		stack_pop(cwd_stack);
+
+    //
+	int stack_push_count = 0;
+
+    	char * saveptr;
+    	char * test = malloc(strlen(path));
+    	strcpy(test, path);
+    	char * dir_name = strtok_r(test, "/", &saveptr);
+
+    	while (dir_name != NULL) {
+
+        	if (strcmp(dir_name, "..") == 0) {
+            		stack_pop(cwd_stack);
+            		//char * buf = malloc(MAX_PATH);
+            		//fs_getcwd(buf, MAX_PATH);
+            		//free(buf);
+            		dir_name = strtok_r(NULL, "/", &saveptr);
+            		continue;
+        	}
+
+
+        	int is_found = 0;
+        	fdDir * entry = dir_table;
+        	for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, entry++) {
+
+            		if (!entry->is_used || entry->parent_inode != stack_peek(cwd_stack))
+                		continue;
+
+            		// check valid
+            		struct fs_diriteminfo * dirinfo = fs_readdir(entry);
+
+           		if (strcmp(dir_name, dirinfo->d_name) == 0) {
+                		stack_push(entry->inode, cwd_stack);
+                		stack_push_count++;
+                		is_found = 1;
+            		}
+        	}
+
+		if (is_found == 0) {
+			printf("%s setcwd: Error. \'%s\' was not found. (Cause: It is not a valid directory type, or it is not in path.)\n", PREFIX, dir_name);
+
+            		// undo directory pushes to cwd_stacks
+            		while (stack_push_count > 0 && stack_size(cwd_stack) > 0)
+                		stack_pop(cwd_stack);
+            		return -1;
+        	}
+        	dir_name = strtok_r(NULL, "/", &saveptr);
+	}
+
+	//char * buf = malloc(MAX_PATH);
+
+	//fs_getcwd(buf, MAX_PATH);
+	printf("%s setcwd: Successful change directory to.\n", PREFIX);
+	//free(buf);
+	return 1;
 }
 
 int dir_get_free_inode() {
@@ -321,6 +424,10 @@ int dir_reload() {
 		if (strstr(meta_buf, meta_key) != NULL) {
 			char * saveptr;
 			char * meta_val = strtok_r(meta_buf, "=\n", &saveptr);
+			
+			dir_count++;
+			if (dir_count > num_table_expansions * DEF_DIR_TABLE_SIZE)
+				dir_table_expand();
 			
 			dir_ptr->is_used = 1;
 			dir_ptr->directoryStartLocation = i;
