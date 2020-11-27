@@ -30,5 +30,14 @@ int b_open (char * filename, int flags) {
     return directory->directoryStartLocation + 1; // add 1 because we do not want to read/write the metadata block
 }
 
-// for b_seek, b_write and b_read, make sure to update directory->dirEntryPosition += count, how ever many bytes were read/written
+void b_init(){
 
+}
+
+// for b_seek, b_write and b_read, make sure to update directory->dirEntryPosition += count, how ever many bytes were read/written
+int startup = 0; 
+int b_write(int fd, char * buffer, int count){
+    if (startup == 0){
+         b_init(); // to initialize the system
+    }
+}
