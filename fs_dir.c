@@ -28,6 +28,7 @@ int dir_is_init();
 int dir_load_config();
 int dir_is_valid_path(char * path, char * dir);
 int dir_get_free_inode();
+int dir_reload();
 //
 
 #define PREFIX "Directory >>"
@@ -49,8 +50,13 @@ void initializeDirectory(Bitvector * vec, int LBA_Pos) {
 	config_location = LBA_Pos;
 	bitmap = vec;
 
-	if (dir_is_init())
-        dir_load_config();
+	if (dir_is_init()) {
+        	dir_load_config();
+        	dir_table = malloc(sizeof(fdDir) * DEF_DIR_TABLE_SIZE * num_table_expansions);
+        	dir_reload();
+        } else {
+        	dir_table = malloc(sizeof(fdDir) * DEF_DIR_TABLE_SIZE);
+        }
 
     // dir stack initialization
 	cwd_stack = stack_create(DEF_PATH_SIZE);
@@ -58,11 +64,14 @@ void initializeDirectory(Bitvector * vec, int LBA_Pos) {
 
 
 
-	dir_table = malloc(sizeof(fdDir) * DEF_DIR_TABLE_SIZE * num_table_expansions);
 	
-	char * buf;
-	fs_mkdir("ABC", DT_DIR);
-	fs_mkdir("AfdBCa", DT_DIR);
+	char * buf = malloc(512);
+
+
+	for (int i = 0; i < 110; i++) {
+		LBAread(buf, 1, i);
+		printf("%d - %s\n", i, buf);
+	}
 
 
 }
@@ -246,24 +255,24 @@ int fs_mkdir(char *pathname, mode_t mode) {
 			for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, dir_iter++) {
 				if (dir_iter->is_used > 0)
 					continue;
-
-				dir_meta = fs_readdir(dir_iter);
 				
 				dir_iter->is_used = 1;
 				dir_iter->inode = dir_get_free_inode();
 				dir_iter->parent_inode = stack_peek(stack_path_temp);
 				dir_iter->directoryStartLocation = free_blocks[i];
 				
-				return 1;
+				break;
 			}
 
 			// write to lba
 			snprintf(meta_write_buffer, 513, "key=%s\nname=%s\ntype=%c\ninode=%d\npinode=%d\nsize=%d\nlbapos=%d\nblen=%d\nmdate=%s\ncdate=%s",
-					meta_key, dir_meta->d_name, 'D', dir_iter->inode, dir_iter->parent_inode, 0, free_blocks[0], 1, NULL, NULL );
-            LBAwrite(meta_write_buffer, 1, free_blocks[0]);
+					meta_key, dir_name, 'D', dir_iter->inode, dir_iter->parent_inode, 0, free_blocks[0], 1, "", "" );
+			printf("mkdir: %s\n", dir_name);
+           		LBAwrite(meta_write_buffer, 1, free_blocks[0]);
                 	
                 	 
 			free(meta_write_buffer);
+			return 1;
 		}
 		dir_name = strtok_r(NULL, "/", &saveptr);
 	
@@ -294,8 +303,51 @@ int dir_get_free_inode() {
     		index_found = dir_get_free_inode();
     	}
     	
-    	printf("!! %d\n", index_found);
 	return  index_found;
+}
+
+int dir_reload() {
+
+	int loaded_dir_counter = 0;
+
+	int vec_size = get_vector_size(bitmap);
+	char * meta_buf = malloc(513);
+	meta_buf[512] = '\0';
+	
+	fdDir * dir_ptr = dir_table;
+	
+	for (int i = 0; i < vec_size; i++) {
+		LBAread(meta_buf, 1, i);
+		if (strstr(meta_buf, meta_key) != NULL) {
+			char * saveptr;
+			char * meta_val = strtok_r(meta_buf, "=\n", &saveptr);
+			
+			dir_ptr->is_used = 1;
+			dir_ptr->directoryStartLocation = i;
+			
+			// notify bitmap
+			set_bit(bitmap, i, 1);
+			
+			while (meta_val != NULL) {
+				if (strstr(meta_val, "pinode") != NULL) {
+					meta_val = strtok_r(NULL, "=\n", &saveptr);
+					dir_ptr->parent_inode = atoi(meta_val);
+				}
+				else if (strstr(meta_val, "inode") != NULL) {
+					meta_val = strtok_r(NULL, "=\n", &saveptr);
+					dir_ptr->inode = atoi(meta_val);
+				}
+				
+				meta_val = strtok_r(NULL, "=\n", &saveptr);
+			}
+			
+			dir_ptr++;
+			loaded_dir_counter++;
+		}
+	}
+
+	free(meta_buf);
+	return loaded_dir_counter;
 }
 
 struct fs_diriteminfo * fs_readdir(fdDir *dirp) {
@@ -316,7 +368,7 @@ struct fs_diriteminfo * fs_readdir(fdDir *dirp) {
 			meta_val = strtok_r(NULL, "=\n", &saveptr);
 			strcpy(dirent_info->d_name, meta_val);
 		}
-		else if (strstr(meta_val, "p_inode") != NULL) {
+		else if (strstr(meta_val, "pinode") != NULL) {
 			meta_val = strtok_r(NULL, "=\n", &saveptr);
 			dirent_info->parent_inode = atoi(meta_val);
 		}
@@ -333,11 +385,11 @@ struct fs_diriteminfo * fs_readdir(fdDir *dirp) {
 			if (strcmp(meta_val, "L"))
 				dirent_info->fileType = 'L';
 		}
-		else if (strstr(meta_val, "b_len") != NULL) {
+		else if (strstr(meta_val, "blen") != NULL) {
 			meta_val = strtok_r(NULL, "=\n", &saveptr);
 			dirent_info->d_reclen = (unsigned short) atoi(meta_val);
 		}
-		else if (strstr(meta_val, "f_size") != NULL) {
+		else if (strstr(meta_val, "size") != NULL) {
 			meta_val = strtok_r(NULL, "=\n", &saveptr);
 			dirent_info->file_size = (unsigned) atoi(meta_val);
 		}
