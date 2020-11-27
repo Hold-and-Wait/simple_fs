@@ -645,7 +645,7 @@ void print_dir() {
                 snprintf(file_name, 18, "%.14s...", file_name);
             }
 
-            printf("\u2503%18.*s \u2502   %08d   \u2502   %08d   \u2502   %08llu   \u2502   %08d   \u2502  %08d   \u2502  %s \u2503\n ",
+            printf("\u2503%18.*s \u2502   %08d   \u2502   %08d   \u2502   %08lu   \u2502   %08d   \u2502  %08d   \u2502  %s \u2503\n ",
                    18,file_name, entry->inode, entry->parent_inode, entry->directoryStartLocation, block_size, fs_readdir(entry)->file_size, file_type_long);
 
             free(file_name_trunc);
@@ -670,6 +670,8 @@ void print_dir() {
 
         printf("\u2501");
     }
+    
+    printf("\n");
     // END TABLE
 
     free(buf);
