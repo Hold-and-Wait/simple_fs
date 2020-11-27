@@ -62,24 +62,6 @@ void initializeDirectory(Bitvector * vec, int LBA_Pos) {
     // dir stack initialization
 	cwd_stack = stack_create(DEF_PATH_SIZE);
 	stack_push(0, cwd_stack);
-
-
-
-	
-	char * buf = malloc(512);
-	//fs_setcwd("file2/file9");
-	//fs_mkdir("file19", 1);
-
-	for (int i = 0; i < 110; i++) {
-		LBAread(buf, 1, i);
-		//printf("%d - %s\n", i, buf);
-	}
-	
-	//fs_setcwd("file1 (3)");
-	//fs_mkdir("file1", 1);
-	print_dir();
-
-
 }
 
 int dir_is_init() {
@@ -222,7 +204,7 @@ int fs_mkdir(char *pathname, mode_t mode) {
 			} else {
 				fdDir * dir_iter = dir_table;
 				for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, dir_iter++) {
-					if (!dir_iter->is_used)
+					if (dir_iter->is_used != 1)
 						continue;
 					if (dir_iter->parent_inode != stack_peek(stack_path_temp))
 						continue;
@@ -242,33 +224,7 @@ int fs_mkdir(char *pathname, mode_t mode) {
 		} else {	// last component may be invalid -> create dir
 		
 			char * meta_write_buffer = malloc(513);
-			
-			// check name does not exist
-			int parent_loc = stack_peek(stack_path_temp);
-			fdDir * dir0 = dir_table;
-			int same_name_count = 0;
-			char substr_of_dir_name[strlen(dir_name) + 1];
-			for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, dir0++) {
-				if (dir0->is_used <= 0)
-					continue;
-				
-				if (dir0->parent_inode != parent_loc)
-					continue;
-				
-				struct fs_diriteminfo * dir_meta = fs_readdir(dir0);
-				memcpy(substr_of_dir_name, dir_meta->d_name, strlen(dir_name));
-				substr_of_dir_name[strlen(dir_name)] = '\0';
-				if (strcmp(dir_name, substr_of_dir_name) == 0) {
-					same_name_count++;
-				}
-				
-			}
-			
-			if (same_name_count > 0) {
-				snprintf(substr_of_dir_name, 100, "%s (%d)", dir_name, same_name_count+1);
-			} else {
-				snprintf(substr_of_dir_name, 100, "%s", dir_name);
-			}
+
 			
 			// Assign lba pos
 			int fb_array[1];
@@ -281,28 +237,26 @@ int fs_mkdir(char *pathname, mode_t mode) {
 			dir_count++;
 			if (dir_count > num_table_expansions * DEF_DIR_TABLE_SIZE)
 				dir_table_expand();
-            		struct fs_diriteminfo * dir_meta;
+
 			for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, dir_iter++) {
-				if (dir_iter->is_used > 0)
+				if (dir_iter->is_used == 1)
 					continue;
-				
 				dir_iter->is_used = 1;
 				dir_iter->inode = inode_index++;
 				dir_iter->parent_inode = stack_peek(stack_path_temp);
-				dir_iter->directoryStartLocation = free_blocks[i];
+				dir_iter->directoryStartLocation = free_blocks[0];
 				
 				break;
 			}
 
 			// write to lba
 			snprintf(meta_write_buffer, 513, "key=%s\nname=%s\ntype=%c\ninode=%d\npinode=%d\nsize=%d\nlbapos=%d\nblen=%d\nmdate=%s\ncdate=%s",
-					meta_key, substr_of_dir_name, 'D', dir_iter->inode, dir_iter->parent_inode, 0, free_blocks[0], 1, "", "" );
-			printf("mkdir: %s\n", dir_name);
-           		LBAwrite(meta_write_buffer, 1, free_blocks[0]);
+					meta_key, dir_name, 'D', dir_iter->inode, dir_iter->parent_inode, 0, free_blocks[0], 1, "", "" );
+			LBAwrite(meta_write_buffer, 1, free_blocks[0]);
                 	
 			free(meta_write_buffer);
 			
-			printf("%s mkdir: New directory created: %s\n", PREFIX, substr_of_dir_name);
+			printf("%s mkdir: New directory created: %s\n", PREFIX, dir_name);
 			return 1;
 		}
 		dir_name = strtok_r(NULL, "/", &saveptr);
