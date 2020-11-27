@@ -75,8 +75,8 @@ void initializeDirectory(Bitvector * vec, int LBA_Pos) {
 		//printf("%d - %s\n", i, buf);
 	}
 	
-	//fs_setcwd("file2");
-	//fs_mkdir("file2", 1);
+	//fs_setcwd("file1 (3)");
+	//fs_mkdir("file1", 1);
 	print_dir();
 
 
@@ -243,6 +243,33 @@ int fs_mkdir(char *pathname, mode_t mode) {
 		
 			char * meta_write_buffer = malloc(513);
 			
+			// check name does not exist
+			int parent_loc = stack_peek(stack_path_temp);
+			fdDir * dir0 = dir_table;
+			int same_name_count = 0;
+			char substr_of_dir_name[strlen(dir_name) + 1];
+			for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, dir0++) {
+				if (dir0->is_used <= 0)
+					continue;
+				
+				if (dir0->parent_inode != parent_loc)
+					continue;
+				
+				struct fs_diriteminfo * dir_meta = fs_readdir(dir0);
+				memcpy(substr_of_dir_name, dir_meta->d_name, strlen(dir_name));
+				substr_of_dir_name[strlen(dir_name)] = '\0';
+				if (strcmp(dir_name, substr_of_dir_name) == 0) {
+					same_name_count++;
+				}
+				
+			}
+			
+			if (same_name_count > 0) {
+				snprintf(substr_of_dir_name, 100, "%s (%d)", dir_name, same_name_count+1);
+			} else {
+				snprintf(substr_of_dir_name, 100, "%s", dir_name);
+			}
+			
 			// Assign lba pos
 			int fb_array[1];
 			int * free_blocks = get_free_blocks_index(bitmap, fb_array, 1);
@@ -269,11 +296,13 @@ int fs_mkdir(char *pathname, mode_t mode) {
 
 			// write to lba
 			snprintf(meta_write_buffer, 513, "key=%s\nname=%s\ntype=%c\ninode=%d\npinode=%d\nsize=%d\nlbapos=%d\nblen=%d\nmdate=%s\ncdate=%s",
-					meta_key, dir_name, 'D', dir_iter->inode, dir_iter->parent_inode, 0, free_blocks[0], 1, "", "" );
+					meta_key, substr_of_dir_name, 'D', dir_iter->inode, dir_iter->parent_inode, 0, free_blocks[0], 1, "", "" );
 			printf("mkdir: %s\n", dir_name);
            		LBAwrite(meta_write_buffer, 1, free_blocks[0]);
                 	
 			free(meta_write_buffer);
+			
+			printf("%s mkdir: New directory created: %s\n", PREFIX, substr_of_dir_name);
 			return 1;
 		}
 		dir_name = strtok_r(NULL, "/", &saveptr);
@@ -356,8 +385,7 @@ int fs_setcwd(char *path) {
         	for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, entry++) {
 
             		if (!entry->is_used || entry->parent_inode != stack_peek(cwd_stack))
-                		continue;
-
+                		continue;                                                                                        
             		// check valid
             		struct fs_diriteminfo * dirinfo = fs_readdir(entry);
 
@@ -602,6 +630,8 @@ void print_dir() {
     // DATA ENTRY
     fdDir * entry = dir_table;
     for (int i = 0; i < DEF_DIR_TABLE_SIZE * num_table_expansions; i++, entry++) {
+    	if (entry->is_used <= 0)
+    		continue;
         if (entry->is_used) {
 
             if (entry->directoryStartLocation <= config_location || entry->inode < 0 || entry->parent_inode < 0  || entry->inode > 999999 || entry->parent_inode > 999999)
@@ -646,7 +676,7 @@ void print_dir() {
             }
 
             printf("\u2503%18.*s \u2502   %08d   \u2502   %08d   \u2502   %08lu   \u2502   %08d   \u2502  %08d   \u2502  %s \u2503\n ",
-                   18,file_name, entry->inode, entry->parent_inode, entry->directoryStartLocation, block_size, fs_readdir(entry)->file_size, file_type_long);
+                   18,file_name, entry->inode, entry->parent_inode, (unsigned long) entry->directoryStartLocation, block_size, fs_readdir(entry)->file_size, file_type_long);
 
             free(file_name_trunc);
             free(buf);
