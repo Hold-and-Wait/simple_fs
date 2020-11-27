@@ -67,14 +67,17 @@ void initializeDirectory(Bitvector * vec, int LBA_Pos) {
 
 	
 	char * buf = malloc(512);
-
+	//fs_setcwd("file2/file9");
+	//fs_mkdir("file19", 1);
 
 	for (int i = 0; i < 110; i++) {
 		LBAread(buf, 1, i);
-		printf("%d - %s\n", i, buf);
+		//printf("%d - %s\n", i, buf);
 	}
 	
-	fs_setcwd("file4");
+	//fs_setcwd("file2");
+	//fs_mkdir("file2", 1);
+	print_dir();
 
 
 }
@@ -128,7 +131,7 @@ int dir_offload_configs() {
 	snprintf(config_write_buffer, 512, "%s\ninode_index=%d\ndir_exp=%d", init_key, inode_index, num_table_expansions);
 	LBAwrite(config_write_buffer, 1, config_location);
 	
-	printf("%s Successfully offloaded config values into volume.\n", PREFIX);
+	printf("%s Successfully offloaded config values into volume. inode_index=%d, num_table_expansions=%d\n", PREFIX, inode_index, num_table_expansions);
 	free(config_write_buffer);
 	return 1;
 }
@@ -257,7 +260,7 @@ int fs_mkdir(char *pathname, mode_t mode) {
 					continue;
 				
 				dir_iter->is_used = 1;
-				dir_iter->inode = dir_get_free_inode();
+				dir_iter->inode = inode_index++;
 				dir_iter->parent_inode = stack_peek(stack_path_temp);
 				dir_iter->directoryStartLocation = free_blocks[i];
 				
@@ -376,37 +379,36 @@ int fs_setcwd(char *path) {
         	dir_name = strtok_r(NULL, "/", &saveptr);
 	}
 
-	//char * buf = malloc(MAX_PATH);
+	char * buf = malloc(256);
 
-	//fs_getcwd(buf, MAX_PATH);
-	printf("%s setcwd: Successful change directory to.\n", PREFIX);
-	//free(buf);
+	fs_getcwd(buf, 256);
+	printf("%s setcwd: Successful change directory to %s.\n", PREFIX, buf);
+	free(buf);
 	return 1;
 }
 
 int dir_get_free_inode() {
-	int index_found = -1;
-	for (int i = 1; i <= inode_index; i++) {
-		fdDir * entry = dir_table;
-		for (int j = 0; j < num_table_expansions * DEF_DIR_TABLE_SIZE; j++, entry++) {
-			if (entry->inode == i) {
-				index_found = -1;
-				break;
-			} else {
+    	int index_found = -1;
+    	for (int i = 1; i < inode_index; i++) {
+        	fdDir * entry = dir_table;
+        	for (int j = 0; j < num_table_expansions * DEF_DIR_TABLE_SIZE; j++, entry++) {
+        		if (entry->is_used > 0)
+        			continue;
+            		if (entry->inode == i) {
+                		index_found = -1;
+                		break;
+            		} else {
                 		index_found = i;
             		}
         	}
         	if (index_found > 0)
-            		break;
+			break;
     	}
     	if (index_found == -1) {
-        	index_found = inode_index++;
+    		inode_index++;
+        	index_found = inode_index;
     	}
-    	if (index_found == 0) {
-    		index_found = dir_get_free_inode();
-    	}
-    	
-	return  index_found;
+    return  index_found;
 }
 
 int dir_reload() {
@@ -549,7 +551,129 @@ fdDir * fs_opendir(const char *name) {
 	return dir_stream;
 }
 
+void print_dir() {
+    char * buf = malloc(513);
+    printf("%s Printing Directory Entries Table:\n", PREFIX);
 
+    // PRINT TABLE HEADERS
+    printf(" ");
+    for (int i = 0; i <= 101; i++) {
+        if (i == 0) {
+            printf("\u250f");
+            continue;
+        }
+        if (i == 101) {
+            printf("\u2513");
+            continue;
+        }
+        if (i == 20 || i == 35 || i == 50 || i == 65 || i == 80 || i == 94) {
+            printf("\u2533");
+            continue;
+        }
+        printf("\u2501");
+    }
+    printf("\n");
+    printf(" \u2503     file_name     \u2503");
+    printf("    inode     \u2503");
+    printf(" parent_inode \u2503");
+    printf("   lba_pos    \u2503");
+    printf("  block_size  \u2503");
+    printf("  file_size  \u2503");
+    printf(" type \u2503\n ");
+    for (int i = 0; i <= 101; i++) {
+        if (i == 0) {
+            printf("\u2523");
+            continue;
+        }
+        if (i == 101) {
+            printf("\u252b");
+            continue;
+        }
+        if (i == 20 || i == 35 || i == 50 || i == 65 || i == 80 || i == 94) {
+            printf("\u2547");
+            continue;
+        }
+        printf("\u2501");
+    }
+    printf("\n ");
+
+    // END HEADER
+
+    // DATA ENTRY
+    fdDir * entry = dir_table;
+    for (int i = 0; i < DEF_DIR_TABLE_SIZE * num_table_expansions; i++, entry++) {
+        if (entry->is_used) {
+
+            if (entry->directoryStartLocation <= config_location || entry->inode < 0 || entry->parent_inode < 0  || entry->inode > 999999 || entry->parent_inode > 999999)
+                continue;
+
+            char * buf = malloc(512);
+            LBAread(buf, 1, entry->directoryStartLocation);
+
+            char file_name[256];
+            char file_type[2];
+            char file_type_long[5];
+            int block_size;
+            char * saveptr;
+            char * f_data = strtok_r(buf, "=\n", &saveptr);
+
+            while (f_data != NULL) {
+
+                if (strstr(f_data, "name") != NULL) {
+                    f_data = strtok_r(NULL, "=\n", &saveptr);
+                    strcpy(file_name, f_data);
+                }if (strstr(f_data, "type") != NULL) {
+                    f_data = strtok_r(NULL, "=\n", &saveptr);
+                    strcpy(file_type, f_data);
+                }
+                if (strstr(f_data, "blen") != NULL) {
+                    f_data = strtok_r(NULL, "=\n", &saveptr);
+                    block_size = atoi(f_data);
+                }
+
+                f_data = strtok_r(NULL, "=\n", &saveptr);
+            }
+
+            if (strcmp(file_type, "R") == 0) {
+                strcpy(file_type_long, "REG");
+            }else if (strcmp(file_type, "D") == 0) {
+                strcpy(file_type_long, "DIR");
+            }
+
+            char * file_name_trunc = malloc(18);
+            if (strlen(file_name) > 15) {
+                snprintf(file_name, 18, "%.14s...", file_name);
+            }
+
+            printf("\u2503%18.*s \u2502   %08d   \u2502   %08d   \u2502   %08llu   \u2502   %08d   \u2502  %08d   \u2502  %s \u2503\n ",
+                   18,file_name, entry->inode, entry->parent_inode, entry->directoryStartLocation, block_size, fs_readdir(entry)->file_size, file_type_long);
+
+            free(file_name_trunc);
+            free(buf);
+        }
+    }
+    // END DATA
+    // LAST ROW
+    for (int i = 0; i <= 101; i++) {
+        if (i == 0) {
+            printf("\u2517");
+            continue;
+        }
+        if (i == 101) {
+            printf("\u251b");
+            continue;
+        }
+        if (i == 20 || i == 35 || i == 50 || i == 65 || i == 80 || i == 94) {
+            printf("\u2537");
+            continue;
+        }
+
+        printf("\u2501");
+    }
+    // END TABLE
+
+    free(buf);
+}
 
 
 
