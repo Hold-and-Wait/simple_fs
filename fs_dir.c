@@ -268,6 +268,102 @@ int fs_mkdir(char *pathname, mode_t mode) {
 	return -1;
 }
 
+int fs_mkfile(char *pathname, int block_len) {
+	
+	fs_stack * stack_path_temp;
+	int f_slash_counter = 0;
+
+	for (int i = 0; i < strlen(pathname); i++) {
+		if (pathname[i] == '/') {
+			if (i == 0 || i == strlen(pathname)-1)
+				continue;
+			f_slash_counter++;
+		}
+	}
+	
+	
+	if (pathname[0] == '/')
+		stack_path_temp = stack_create(DEF_PATH_SIZE);
+	else
+		stack_path_temp = stack_copy(cwd_stack);
+		
+	char path_c[strlen(pathname)];
+	strcpy(path_c, pathname);
+	
+	char * saveptr;
+	char * dir_name = strtok_r(path_c, "/", &saveptr);
+	
+	while (dir_name != NULL) {
+		if (f_slash_counter > 0) { // validate path components
+			int is_found = 0;
+			if (strcmp(dir_name, "..") == 0) {
+				stack_pop(stack_path_temp);
+			} else {
+				fdDir * dir_iter = dir_table;
+				for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, dir_iter++) {
+					if (dir_iter->is_used != 1)
+						continue;
+					if (dir_iter->parent_inode != stack_peek(stack_path_temp))
+						continue;
+					
+					struct fs_diriteminfo * dir_info = fs_readdir(dir_iter);
+					if (strcmp(dir_info->d_name, dir_name) == 0) {
+						stack_push(dir_iter->inode, stack_path_temp);
+						is_found = 1;
+						break;
+					}
+				}
+			}
+			if (!is_found) {
+				printf("%s mkdir error: invalid path component \'%s\'.\n", PREFIX, dir_name);
+				return -1;
+			}
+			f_slash_counter--;
+		} else {	// last component may be invalid -> create dir
+		
+			char * meta_write_buffer = malloc(513);
+
+			
+			// Assign lba pos
+			int fb_array[block_len];
+			int * free_blocks = get_free_blocks_index(bitmap, fb_array, block_len);
+			for (int i = 0; i < block_len; ++i)
+			    set_bit(bitmap, free_blocks[i], 1);
+                		
+			// Load into dir table
+			fdDir * dir_iter = dir_table;
+			dir_count++;
+			if (dir_count > num_table_expansions * DEF_DIR_TABLE_SIZE)
+				dir_table_expand();
+
+			for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, dir_iter++) {
+				if (dir_iter->is_used == 1)
+					continue;
+				dir_iter->is_used = 1;
+				dir_iter->inode = inode_index++;
+				dir_iter->parent_inode = stack_peek(stack_path_temp);
+				dir_iter->directoryStartLocation = free_blocks[0];
+				
+				break;
+			}
+
+			// write to lba
+			snprintf(meta_write_buffer, 513, "key=%s\nname=%s\ntype=%c\ninode=%d\npinode=%d\nsize=%d\nlbapos=%d\nblen=%d\nmdate=%s\ncdate=%s",
+					meta_key, dir_name, 'R', dir_iter->inode, dir_iter->parent_inode, 0, free_blocks[0], block_len, "", "" );
+			LBAwrite(meta_write_buffer, 1, free_blocks[0]);
+                	
+			free(meta_write_buffer);
+			
+			printf("%s new file created: %s\n", PREFIX, dir_name);
+			return 1;
+		}
+		dir_name = strtok_r(NULL, "/", &saveptr);
+	
+	}
+	printf("%s mkdir error: undefined.\n", PREFIX);
+	return -1;
+}
+
 char * fs_getcwd(char *buf, size_t size) {
 	fs_stack * temp = stack_copy(cwd_stack);
 	fs_stack * reverse_cwd = stack_create(DEF_PATH_SIZE);
@@ -505,9 +601,6 @@ int dir_reload() {
 			dir_ptr->is_used = 1;
 			dir_ptr->directoryStartLocation = i;
 			
-			// notify bitmap
-			set_bit(bitmap, i, 1);
-			
 			while (meta_val != NULL) {
 				if (strstr(meta_val, "pinode") != NULL) {
 					meta_val = strtok_r(NULL, "=\n", &saveptr);
@@ -517,9 +610,21 @@ int dir_reload() {
 					meta_val = strtok_r(NULL, "=\n", &saveptr);
 					dir_ptr->inode = atoi(meta_val);
 				}
+				else if (strstr(meta_val, "lbapos") != NULL) {
+					meta_val = strtok_r(NULL, "=\n", &saveptr);
+					dir_ptr->directoryStartLocation = atoi(meta_val);
+				}
 				
 				meta_val = strtok_r(NULL, "=\n", &saveptr);
 			}
+			
+			struct fs_diriteminfo * dir_info = fs_readdir(dir_ptr);
+			
+			// notify bitmap
+			for (int j = dir_ptr->directoryStartLocation; j <= dir_info->d_reclen + dir_ptr->directoryStartLocation; j++) {
+				set_bit(bitmap, j, 1);
+			}
+			
 			
 			dir_ptr++;
 			loaded_dir_counter++;
@@ -758,6 +863,60 @@ int fs_isDir(char * path) {
     	}
 
 	return is_found;
+}
+
+int fs_stat(const char *path, struct fs_stat * buf) {
+	char path_c[strlen(path)];
+	strcpy(path_c, path);
+	
+	fs_stack * cwd_temp;
+    	int dir_count = 0;
+
+    	for (int i = 0; i < strlen(path_c); i++) {
+        	if (path[i] == '/')
+            		dir_count++;
+    	}
+
+    	if (path_c[0] == '/') {
+        	dir_count--;
+        	cwd_temp = stack_create(128);
+    	} else {
+        	cwd_temp = stack_copy(cwd_stack);
+    	}
+    	if (path_c[strlen(path_c)] == '/')
+        	dir_count--;
+
+	char * saveptr;
+	int is_found;
+	
+	struct fs_diriteminfo * dir_info;
+	fdDir * entry = dir_table;
+	
+    	char * dir_name = strtok_r(path_c, "/", &saveptr);
+    	while (dir_name != NULL) {
+    		is_found = 0;
+    		entry = dir_table;
+    		
+        	for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, entry++) {
+        		dir_info = fs_readdir(entry);
+        		if (strcmp(dir_name, dir_info->d_name) == 0 && entry->parent_inode == stack_peek(cwd_temp)) {
+        			stack_push(entry->parent_inode, cwd_temp);
+        			is_found = 1;
+        			break;
+        		}
+        	}
+        	if (is_found == 0) {
+        		printf("%s fs_stat error: invalid path: \'%s\'.\n", PREFIX, dir_name);
+        		return 0;
+        	}
+        	dir_name = strtok_r(NULL, "/", &saveptr);
+    	}
+    	
+    	buf->st_size = dir_info->file_size;
+    	buf->st_blksize = 512;
+    	buf->st_blocks = dir_info->d_reclen;
+    	
+    	return 1;
 }
 
 void print_dir() {

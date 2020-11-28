@@ -63,7 +63,8 @@ int get_free_inode();
 fdDir get_directory_entry(char * path);
 
 int fs_mkdir(char *pathname, mode_t mode);
-int fs_rmdir(char *pathname); // todo
+int fs_rmdir(char *pathname); 
+int fs_mkfile(char *pathname, int block_len);
 fdDir * fs_opendir(const char *name);
 struct fs_diriteminfo *fs_readdir(fdDir *dirp);
 int fs_closedir(fdDir *dirp);
