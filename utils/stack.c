@@ -54,11 +54,9 @@ int stack_push(int value, fs_stack * stack) {
 		return value;
 	} else {
 		// expand
-		printf("%d %d\n", stack->capacity,  stack->current_size);
 		stack->capacity = stack->capacity * 2;
-        printf("%d %d\n", stack->capacity,  stack->current_size);
 
-        stack->content = realloc(stack->content, sizeof(int) * stack->capacity);
+        	stack->content = realloc(stack->content, sizeof(int) * stack->capacity);
 		stack_push(value, stack);
 	}
 
