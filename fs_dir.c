@@ -427,6 +427,9 @@ char * fs_getcwd(char *buf, size_t size) {
 }
 
 int fs_rmdir(char *pathname) {
+    if (fs_isDir(pathname) == -1)
+        return 0;
+
 	fs_stack * stack_path_temp;
 	int f_slash_counter = 0;
 
@@ -760,6 +763,11 @@ fdDir * fs_opendir(const char *name) {
     	return initial_pos_ptr;
 }
 
+int fs_closedir(fdDir *dirp) {
+
+    return -1;
+}
+
 int fs_isFile(char * path) {
     	fs_stack * cwd_temp;
     	int dir_count = 0;
@@ -778,8 +786,10 @@ int fs_isFile(char * path) {
     	if (path[strlen(path)] == '/')
         	dir_count--;
 
-	char * saveptr;
-    	char * dir_name = strtok_r(path, "/", &saveptr);
+	    char * saveptr;
+	    char path_c[strlen(path)];
+	    strcpy(path_c, path);
+    	char * dir_name = strtok_r(path_c, "/", &saveptr);
     	while (dir_name != NULL) {
         	if (dir_count == 0) { // destination
 		    	fdDir * entry = dir_table;
@@ -805,7 +815,7 @@ int fs_isFile(char * path) {
 		                		read_value = strtok_r(NULL, "=\n", &saveptr2);
 		            		}
 		            		if (strcmp(file_name, dir_name) == 0 && file_type[0] == 'R') {
-		               			return entry->directoryStartLocation+1;
+		               			return entry->inode;
 		            		}
 		            		free(buf);
 		        	}
@@ -888,6 +898,41 @@ int fs_isDir(char * path) {
     	}
 
 	return is_found;
+}
+
+int fs_delete(char * filename) {
+    int inode_of_file = fs_isFile(filename); // -1 if invalid, inode # if valid
+    if (inode_of_file == -1)
+        return 0;
+
+    fdDir * entry = dir_table;
+
+    for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, entry++) {
+        if (entry->is_used == 0)
+            continue;
+
+        if (entry->inode == inode_of_file) {
+
+            struct fs_diriteminfo * dir_info = fs_readdir(entry);
+
+            // notify bitmap to free up file
+            for (int j = entry->directoryStartLocation; j < dir_info->d_reclen; j++)
+                set_bit(bitmap, j, 0);
+
+            // remove file's metadata block
+            char * empty_buf = malloc(512);
+            LBAwrite(empty_buf, 1, entry->directoryStartLocation);
+            free(empty_buf);
+
+            // remove from table
+            entry->is_used = 0;
+
+
+            return 1;
+        }
+    }
+
+    return 0;
 }
 
 int fs_stat(const char *path, struct fs_stat * buf) {
