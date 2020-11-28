@@ -47,6 +47,7 @@ int config_location;
 int inode_index;
 int dir_count = 0;
 int num_table_expansions = 1;
+int is_initialized = 0;
 
 void initializeDirectory(Bitvector * vec, int LBA_Pos) {
 	config_location = LBA_Pos;
@@ -63,6 +64,8 @@ void initializeDirectory(Bitvector * vec, int LBA_Pos) {
     // dir stack initialization
 	cwd_stack = stack_create(DEF_PATH_SIZE);
 	stack_push(0, cwd_stack);
+	
+	is_initialized = 1;
 }
 
 int dir_is_init() {
@@ -173,6 +176,11 @@ void dir_table_expand() {
 }
 
 int fs_mkdir(char *pathname, mode_t mode) {
+
+	if (!is_initialized) {
+		printf("%s mkdir: error. (Cause: directory maanger is not initialized)\n", PREFIX);
+		return -1;
+	}
 	
 	fs_stack * stack_path_temp;
 	int f_slash_counter = 0;
@@ -269,6 +277,11 @@ int fs_mkdir(char *pathname, mode_t mode) {
 }
 
 int fs_mkfile(char *pathname, int block_len) {
+
+	if (!is_initialized) {
+		printf("%s mkdir: error. (Cause: directory maanger is not initialized)\n", PREFIX);
+		return -1;
+	}
 	
 	fs_stack * stack_path_temp;
 	int f_slash_counter = 0;
@@ -365,6 +378,12 @@ int fs_mkfile(char *pathname, int block_len) {
 }
 
 char * fs_getcwd(char *buf, size_t size) {
+
+	if (!is_initialized) {
+		printf("%s mkdir: error. (Cause: directory maanger is not initialized)\n", PREFIX);
+		return NULL;
+	}
+	
 	fs_stack * temp = stack_copy(cwd_stack);
 	fs_stack * reverse_cwd = stack_create(DEF_PATH_SIZE);
 	while (stack_size(temp) > 0)
@@ -495,6 +514,12 @@ void dir_rm_helper(int inode_to_remove) {
 }
 
 int fs_setcwd(char *path) {
+
+	if (!is_initialized) {
+		printf("%s mkdir: error. (Cause: directory maanger is not initialized)\n", PREFIX);
+		return -1;
+	}
+	
 	if (path[0] == '/')
         	while (stack_size(cwd_stack) > 1)
            		stack_pop(cwd_stack);
@@ -621,7 +646,7 @@ int dir_reload() {
 			struct fs_diriteminfo * dir_info = fs_readdir(dir_ptr);
 			
 			// notify bitmap
-			for (int j = dir_ptr->directoryStartLocation; j <= dir_info->d_reclen + dir_ptr->directoryStartLocation; j++) {
+			for (int j = dir_ptr->directoryStartLocation; j < dir_info->d_reclen + dir_ptr->directoryStartLocation; j++) {
 				set_bit(bitmap, j, 1);
 			}
 			

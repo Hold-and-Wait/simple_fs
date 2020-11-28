@@ -46,12 +46,13 @@ int main (int argc, char *argv[]){
    	Bitvector *bitmap_vec  = create_bitvec(volumeSize, blockSize);
 
 	// Init directory entries
+	fs_mkdir("file08.txt", 10);
 
 	int retVal = 0;
 	retVal = initSuperBlock(filename, &volumeSize, &blockSize, sbPtr, bitmap_vec); 	// Mounts volume and formats File System
 	
-	fs_mkfile("textfile01", 10);
-	fs_mkfile("textfile0123", 10);
+	//fs_mkfile("file02.txt", 10);
+	
 	print_dir();
 	dir_offload_configs();
 	return 0;	
