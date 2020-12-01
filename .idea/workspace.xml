@@ -31,10 +31,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7429f263-ac97-4138-8ddd-58776a4f1a39" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/fsLowDriver.c" beforeDir="false" afterPath="$PROJECT_DIR$/fsLowDriver.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/fs_dir.c" beforeDir="false" afterPath="$PROJECT_DIR$/fs_dir.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/simple_fs" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -122,11 +121,12 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="546" y="433" width="587" height="198" key="makefile.clean.confirm.dialog" timestamp="1606383460418">
+    <state x="546" y="433" width="587" height="198" key="makefile.clean.confirm.dialog" timestamp="1606786049595">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="546" y="433" width="587" height="198" key="makefile.clean.confirm.dialog/0.0.1680.1050@0.0.1680.1050" timestamp="1606383460418" />
+    <state x="546" y="433" width="587" height="198" key="makefile.clean.confirm.dialog/0.0.1680.1050@0.0.1680.1050" timestamp="1606786049595" />
   </component>
 </project>
