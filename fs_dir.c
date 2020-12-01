@@ -128,6 +128,52 @@ void dir_table_expand() {
 	printf("%s Expanded directory table. New size: %d\n", PREFIX, DEF_DIR_TABLE_SIZE * num_table_expansions);
 }
 
+int dir_move(fdDir * dirp, char * destination_directory) {
+	if (dirp == NULL)
+		return -1;
+		
+	// verify valid path
+	fs_stack * stack_path_temp;
+	int f_slash_counter = 0;
+
+	for (int i = 0; i < strlen(destination_directory); i++) {
+		if (destination_directory[i] == '/') {
+			if (i == 0 || i == strlen(destination_directory)-1)
+				continue;
+			f_slash_counter++;
+		}
+	}
+	
+	
+	if (destination_directory[0] == '/')
+		stack_path_temp = stack_create(DEF_PATH_SIZE);
+	else
+		stack_path_temp = stack_copy(cwd_stack);
+		
+	char path_c[strlen(destination_directory)];
+	strcpy(path_c, destination_directory);
+	
+	char * saveptr;
+	char * dir_name = strtok_r(path_c, "/", &saveptr);
+	
+	while (dir_name != NULL) {
+		
+		fdDir * dir_iter = dir_table;
+		for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, dir_iter++) {
+			if (f_slash_counter > 0) {
+				
+				f_slash_counter--;
+			} else {
+			
+			}
+		}
+		
+		char * dir_name = strtok_r(path_c, "/", &saveptr);
+	}
+	
+	return -1;
+}
+
 int fs_mkdir(char *pathname, mode_t mode) {
 
 	if (!is_initialized) {
