@@ -23,6 +23,19 @@
 #include <getopt.h>
 #include <string.h>
 
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <pthread.h>
+#include <errno.h>
+#include <math.h>
+#include <time.h>
+#include "utils/stack.h"
+#include "fsMBR.h"
+#include "bitmap_vector.h"
 #include "mfs.h"
 
 /***************  START LINUX TESTING CODE FOR SHELL ***************/
@@ -107,12 +120,12 @@
 
 /****   SET THESE TO 1 WHEN READY TO TEST THAT COMMAND ****/
 #define CMDLS_ON	1
-#define CMDCP_ON	1
-#define CMDMV_ON	1
+#define CMDCP_ON	0
+#define CMDMV_ON	0
 #define CMDMD_ON	1
 #define CMDRM_ON	1
-#define CMDCP2L_ON	1
-#define CMDCP2FS_ON	1
+#define CMDCP2L_ON	0
+#define CMDCP2FS_ON	0
 #define CMDCD_ON	1
 #define CMDPWD_ON	1
 
@@ -156,30 +169,37 @@ static int dispatchcount = sizeof (dispatchTable) / sizeof (dispatch_t);
 // Display files for use by ls command
 int displayFiles (fdDir * dirp, int flall, int fllong)
 	{
+    print_dir();
+    return 1;
 	if (dirp == NULL)	//get out if error
 		return (-1);
-	
-	struct fs_diriteminfo * di;
+
+
 	struct fs_stat statbuf;
 	
-	di = fs_readdir (dirp);
-	printf("\n");
-	while (di != NULL) 
-		{
-		if ((di->d_name[0] != '.') || (flall)) //if not all and starts with '.' it is hidden
-			{
-			if (fllong)
-				{
-				fs_stat (di->d_name, &statbuf);
-				printf ("%s    %9ld   %s\n", fs_isDir(di->d_name)?"D":"-", statbuf.st_size, di->d_name);
-				}
-			else
-				{
-				printf ("%s\n", di->d_name);
-				}
-			}
-		di = fs_readdir (dirp);
-		}
+	//di = fs_readdir (dirp);
+	int pos = 0;
+	while (dirp->is_used == 1) {
+        struct fs_diriteminfo * di = fs_readdir(dirp);
+        //printf("!!!!!%d %s\n",  dirp->is_used,  di->fileType);
+
+
+        if (fllong) {
+            if (pos == 0)
+                printf("%s  %9u    %s", di->fileType=='D'?"D":"-",di->file_size, di->d_name);
+            else if (pos == 1)
+                printf("%s  %9u    %s", di->fileType=='D'?"D":"-",di->file_size, di->d_name);
+            else
+                printf("%s  %9u    %s", di->fileType=='D'?"D":"-",di->file_size, di->d_name);
+
+            printf("\n");
+
+        } else {
+            printf("%s\n", di->d_name);
+	    }
+        pos++;
+        dirp++;
+	}
 	fs_closedir (dirp);
 	return 0;
 	}
@@ -261,9 +281,11 @@ int cmd_ls (int argcnt, char *argvec[])
 		//processing arguments after options
 		for (int k = optind; k < argcnt; k++)
 			{
+		    printf("%s!@#\n", argvec[k]);
 			if (fs_isDir(argvec[k]))
 				{
 				fdDir * dirp;
+				printf("%s -- \n", argvec[k]);
 				dirp = fs_opendir (argvec[k]);
 				displayFiles (dirp, flall, fllong);
 				}
@@ -272,7 +294,7 @@ int cmd_ls (int argcnt, char *argvec[])
 				if (fs_isFile (argvec[k]))
 					{
 					//no support for long format here
-					printf ("%s\n", argvec[k]);
+
 					}
 				else
 					{
@@ -692,7 +714,24 @@ int main (int argc, char * argv[])
 		
 	using_history();
 	stifle_history(200);	//max history entries
-	
+        char *filename;
+        // init
+	uint64_t blockSize;
+	uint64_t volumeSize;
+	filename = "simple_fs";
+	volumeSize = 1048576;
+	blockSize = 512;
+
+	SuperBlock *sbPtr = malloc(blockSize);
+
+	//Bitvector *bitmap_vec  = malloc(blockSize);
+	Bitvector *bitmap_vec  = create_bitvec(volumeSize, blockSize);
+
+	// Init directory entries
+	//fs_mkdir("file08.txt", 10);
+
+    int retVal = 0;
+    retVal = initSuperBlock(filename, &volumeSize, &blockSize, sbPtr, bitmap_vec);
 	while (1)
 		{
 		cmdin = readline("Prompt > ");
@@ -726,4 +765,6 @@ int main (int argc, char * argv[])
 		free (cmd);
 		cmd = NULL;		
 		} // end while
+
+		dir_offload_configs();
 	}

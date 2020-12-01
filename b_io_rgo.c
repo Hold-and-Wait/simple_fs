@@ -23,6 +23,7 @@
 #include "fsLow.h"
 #include "fsMBR.h"
 #include "utils/linked_list.h"
+#include "mfs.h"
 //^___Libraries_&_Utilities__^
 
 typedef struct file_INFO {
@@ -70,6 +71,10 @@ int reset_local_vars(b_io_fd f_descriptor);
  */
 int b_open (char * filename, int flags) {
 
+    // .
+    // ..
+    // ,,
+    //
 	/*	// check if filename exists and it is of type DT_REG (a file)
 	fdDir * directory = fs_opendir(filename);
 

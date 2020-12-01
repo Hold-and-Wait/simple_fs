@@ -57,10 +57,9 @@ void free_dir_mem();
 
 int dir_offload_configs();
 int dirent_check_is_init();
-int is_valid_dir(char * path, char * new_dir_name);
 int get_free_inode();
+void dir_modify_meta(fdDir * dir, struct fs_diriteminfo * updated_meta);
 
-fdDir get_directory_entry(char * path);
 
 int fs_mkdir(char *pathname, mode_t mode);
 int fs_rmdir(char *pathname); 
@@ -68,7 +67,6 @@ int fs_mkfile(char *pathname, int block_len);
 fdDir * fs_opendir(const char *name);
 struct fs_diriteminfo *fs_readdir(fdDir *dirp);
 int fs_closedir(fdDir *dirp);
-int getLBAPosition(char * filepath);
 
 char * fs_getcwd(char *buf, size_t size);
 int fs_setcwd(char *buf);   //linux chdir

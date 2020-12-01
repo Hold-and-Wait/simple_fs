@@ -321,7 +321,7 @@ int fs_mkfile(char *pathname, int block_len) {
 			free(meta_write_buffer);
 			
 			printf("%s new file created: %s\n", PREFIX, dir_name);
-			return 1;
+			return 0;
 		}
 		dir_name = strtok_r(NULL, "/", &saveptr);
 	
@@ -367,7 +367,6 @@ char * fs_getcwd(char *buf, size_t size) {
             		for (int i = 0; i < strlen(dirinfo->d_name); i++) {
                 		buf[pos++] = dirinfo->d_name[i];
             		}
-            //buf[pos++] = '/';
         	}
 
         	tableptr++;
@@ -492,9 +491,6 @@ int fs_setcwd(char *path) {
 
         	if (strcmp(dir_name, "..") == 0) {
             		stack_pop(cwd_stack);
-            		//char * buf = malloc(MAX_PATH);
-            		//fs_getcwd(buf, MAX_PATH);
-            		//free(buf);
             		dir_name = strtok_r(NULL, "/", &saveptr);
             		continue;
         	}
@@ -524,6 +520,7 @@ int fs_setcwd(char *path) {
                 		stack_pop(cwd_stack);
             		return -1;
         	}
+
         	dir_name = strtok_r(NULL, "/", &saveptr);
 	}
 
@@ -532,7 +529,7 @@ int fs_setcwd(char *path) {
 	fs_getcwd(buf, 256);
 	printf("%s setcwd: Successful change directory to %s.\n", PREFIX, buf);
 	free(buf);
-	return 1;
+	return 0;
 }
 
 int dir_get_free_inode() {
@@ -667,20 +664,49 @@ struct fs_diriteminfo * fs_readdir(fdDir *dirp) {
 }
 
 fdDir * fs_opendir(const char *name) {
+
     fdDir * dir_item = malloc(sizeof(fdDir));
     fs_stack * opdir_path_track = stack_copy(cwd_stack);
 
     fdDir * dir_stream = malloc(sizeof(fdDir) *num_table_expansions * DEF_DIR_TABLE_SIZE);
-
-    char * name_c = strdup(name);
+    char name_c[strlen(name)];
+    strcpy(name_c, name);
     int inode_of_dir = fs_isDir(name_c);
-    if (inode_of_dir == -1)
-        inode_of_dir = fs_isFile(name_c);
-    if (inode_of_dir == -1)
-        return NULL;
+    if (strlen(name_c) == 0 && name_c[0] == '/')
+        inode_of_dir = 0;
+    else {
+        inode_of_dir = fs_isDir(name_c);
+        if (inode_of_dir == -1)
+            inode_of_dir = fs_isFile(name_c);
+    }
+    //printf("isdir? %d\n", fs_isDir("abc"));
+   /* else {
+        inode_of_dir = fs_isDir(name_c);
+        if (inode_of_dir == -1)
+            inode_of_dir = fs_isFile(name_c);
+
+    }*/
+    //return NULL;
+
+
 
     fdDir * tableptr = dir_table;
     fdDir * init_dir = dir_stream;
+
+    if (inode_of_dir == 0) {
+
+        for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, tableptr++) {
+            if (tableptr->parent_inode == 0) {
+
+                dir_stream->inode = tableptr->inode;
+                dir_stream->parent_inode = tableptr->parent_inode;
+                dir_stream->is_used = 1;
+                dir_stream->directoryStartLocation = tableptr->directoryStartLocation;
+                dir_stream++;
+            }
+        }
+        return init_dir;
+    }
 
     int self = -1;
     int parent = 0;
@@ -696,7 +722,6 @@ fdDir * fs_opendir(const char *name) {
                 tableptr = dir_table;
                 i = 0;
                 self = dir_stream->inode;
-                printf("s: %d\n", dir_stream->inode);
                 continue;
             }
         } else {
@@ -704,9 +729,8 @@ fdDir * fs_opendir(const char *name) {
                 if (dir_stream->parent_inode == 0) {
                     dir_stream++;
                     dir_stream->is_used = 1;
-                    dir_stream->inode = tableptr->inode;
-                    dir_stream->parent_inode = tableptr->parent_inode;
-                    printf("p: %d\n", dir_stream->inode);
+                    dir_stream->inode = 0;
+                    dir_stream->parent_inode = 0;
                     break;
                 }
 
@@ -715,7 +739,6 @@ fdDir * fs_opendir(const char *name) {
                     dir_stream->is_used = 1;
                     dir_stream->inode = tableptr->inode;
                     dir_stream->parent_inode = tableptr->parent_inode;
-                    printf("p: %d\n", dir_stream->inode);
                     break;
                 }
             }
@@ -725,21 +748,19 @@ fdDir * fs_opendir(const char *name) {
     // get direct children
     tableptr = dir_table;
     int num_children = 0;
+
     for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, tableptr++) {
         if (tableptr->is_used == 0)
             continue;
 
         if (tableptr->parent_inode == self) {
-            printf("C: %d\n", tableptr->inode);
             dir_stream++;
             num_children++;
             dir_stream->is_used = 1;
             dir_stream->inode = tableptr->inode;
             dir_stream->parent_inode = tableptr->parent_inode;
         }
-
     }
-
     return init_dir;
 }
 
@@ -834,13 +855,17 @@ int fs_isDir(char * path) {
     	}
 
     	if (path[0] == '/') {
+    	    if (strlen(path) == 1)
+    	        return 0;
         	dir_count--;
         	cwd_temp = stack_create(128);
-	} else {
+        	stack_push(0, cwd_temp);
+	    } else {
         	cwd_temp = stack_copy(cwd_stack);
     	}
     	if (path[strlen(path)] == '/')
         	dir_count--;
+
 
     	char temp_path[strlen(path)];
     	strcpy(temp_path, path);
@@ -863,10 +888,13 @@ int fs_isDir(char * path) {
 
             		if (direnfo == NULL)
                 		continue;
-            		if (strcmp(direnfo->d_name, dir_name) == 0 && entry->parent_inode == stack_peek(cwd_temp) && direnfo->fileType == 'D') {
+
+                if (strcmp(direnfo->d_name, dir_name) == 0 && entry->parent_inode == stack_peek(cwd_temp) && direnfo->fileType == 'D') {
                 		is_found = entry->inode;
                 		stack_push(entry->inode, cwd_temp);
-                		break;
+
+                        break;
+            		} else {
             		}
 
         	}
@@ -915,8 +943,23 @@ int fs_delete(char * filename) {
     return 0;
 }
 
-void dir_modify_file_size(fdDir * dir) {
+void dir_modify_meta(fdDir * dir, struct fs_diriteminfo * updated_meta) {
+    char * meta_write_buffer = malloc(513);
+    struct fs_diriteminfo * current_meta = fs_readdir(dir);
 
+    // update lba location, if needed
+    fdDir * tableptr = dir_table;
+    for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, tableptr++) {
+
+        if (tableptr->inode == dir->inode) {
+            tableptr->directoryStartLocation = dir->directoryStartLocation;
+        }
+    }
+
+    snprintf(meta_write_buffer, 513, "key=%s\nname=%s\ntype=%c\ninode=%d\npinode=%d\nsize=%d\nlbapos=%d\nblen=%d\nmdate=%s\ncdate=%s",
+             meta_key, current_meta->d_name, 'R', dir->inode, dir->parent_inode, updated_meta->file_size, (int)dir->directoryStartLocation, updated_meta->d_reclen, "", "" );
+    LBAwrite(meta_write_buffer, 1, dir->directoryStartLocation);
+    free(meta_write_buffer);
 }
 
 int fs_stat(const char *path, struct fs_stat * buf) {
