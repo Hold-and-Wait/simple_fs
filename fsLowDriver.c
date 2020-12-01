@@ -50,8 +50,17 @@ int main (int argc, char *argv[]){
 
 	int retVal = 0;
 	retVal = initSuperBlock(filename, &volumeSize, &blockSize, sbPtr, bitmap_vec); 	// Mounts volume and formats File System
-	
-	print_dir();
+	//fs_mkfile("a_medium_sized_file", 350);
+	//fdDir * dir_stream = fs_opendir("a_medium_sized_file");
+	//printf("%d\n", dir_stream->inode);
+	//fs_mkdir("c", 1);
+	fs_setcwd("c");
+    fdDir * dir_stream = fs_opendir("text_files");
+    while (dir_stream->is_used == 1) {
+        printf("%d\n", dir_stream->inode);
+        dir_stream++;
+    }
+    print_dir();
 	dir_offload_configs();
 	return 0;	
 }

@@ -680,34 +680,42 @@ fdDir * fs_opendir(const char *name) {
         return NULL;
 
     fdDir * tableptr = dir_table;
+    fdDir * init_dir = dir_stream;
 
-    int self = 0;
+    int self = -1;
     int parent = 0;
 
 
     for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, tableptr++) {
 
-        if (self == 0) {
+        if (self == -1) {
             if (tableptr->inode == inode_of_dir) {
-                dir_stream = tableptr;
+                dir_stream->is_used = 1;
+                dir_stream->inode = tableptr->inode;
+                dir_stream->parent_inode = tableptr->parent_inode;
                 tableptr = dir_table;
                 i = 0;
                 self = dir_stream->inode;
+                printf("s: %d\n", dir_stream->inode);
                 continue;
             }
         } else {
             if (parent == 0) {
                 if (dir_stream->parent_inode == 0) {
                     dir_stream++;
-                    dir_stream->inode = 0;
-                    dir_stream->parent_inode = 0;
                     dir_stream->is_used = 1;
+                    dir_stream->inode = tableptr->inode;
+                    dir_stream->parent_inode = tableptr->parent_inode;
+                    printf("p: %d\n", dir_stream->inode);
                     break;
                 }
 
                 else if (dir_stream->parent_inode == tableptr->inode) {
                     dir_stream++;
-                    dir_stream = tableptr;
+                    dir_stream->is_used = 1;
+                    dir_stream->inode = tableptr->inode;
+                    dir_stream->parent_inode = tableptr->parent_inode;
+                    printf("p: %d\n", dir_stream->inode);
                     break;
                 }
             }
@@ -722,18 +730,17 @@ fdDir * fs_opendir(const char *name) {
             continue;
 
         if (tableptr->parent_inode == self) {
+            printf("C: %d\n", tableptr->inode);
             dir_stream++;
             num_children++;
-            dir_stream = tableptr;
+            dir_stream->is_used = 1;
+            dir_stream->inode = tableptr->inode;
+            dir_stream->parent_inode = tableptr->parent_inode;
         }
+
     }
 
-    while (num_children > -1) {
-        dir_stream--;
-        num_children--;
-    }
-
-    return dir_stream;
+    return init_dir;
 }
 
 int fs_closedir(fdDir *dirp) {
@@ -906,6 +913,10 @@ int fs_delete(char * filename) {
     }
 
     return 0;
+}
+
+void dir_modify_file_size(fdDir * dir) {
+
 }
 
 int fs_stat(const char *path, struct fs_stat * buf) {
