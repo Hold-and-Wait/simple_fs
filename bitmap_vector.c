@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
-#include <string.h>
 #include "bitmap_vector.h"
 
 #ifndef uint64_t
@@ -22,14 +21,6 @@ typedef u_int64_t uint64_t;
 #ifndef uint32_t
 typedef u_int32_t uint32_t;
 #endif
-
-int NUM_OF_FREE_BLOCKS;
-int NUM_OF_BLOCKS_IN_VOLUME;
-
-
-
-
-
 /*
  * Allocates a pointer of type Bitvector with size = Bitvector
  * Allocates a pointer of type char with size = 2^n
@@ -43,72 +34,6 @@ Bitvector* create_bitvec(uint64_t n_bits, uint64_t blockSize) {
 	vector->bits = (char*)malloc(size);						// Array of chars
 	vector->size = n_bits / blockSize;						// Vector size
 	return vector;
-}
-
-
-
-
-
-
-void initBitmapVector(uint64_t *volumesize, uint64_t *blocksize, Bitvector *bitmap_vec) {
-
-	u_int64_t blockSize = blocksize;
-	u_int64_t volSize = volumesize;
-	
-	int Size;
-	Size = bitmap_vec->size;
-	printf("Here is the size of the bitmap_vec: %u\n", Size);
-//HERE IS WHERE THE CODE BREAKS - WHY? BECAUSE ITS OVERWRITIGN THE BITMAP
-	for (int bit_pos = 0; bit_pos < bitmap_vec->size; bit_pos++) {
-		set_bit(bitmap_vec, bit_pos, 0);
-	}
-
-	for(int bit_pos = 0; bit_pos < 100; bit_pos++) 				// Reserve First 100 Blocks
-		set_bit(bitmap_vec, bit_pos, 1);
-
-	
-	char bit_str_array [blockSize]; 					// Needed to convert bits into chars block-size = 512 bytes
-	for (int var = 0; var < sizeof(bit_str_array); var++) 			// Initialize char bit_str_array
-		bit_str_array [var] = -1;
-
-	int count = 0;
-										// bitmap_vec->LOCATION_ID = 2
-	int block_pos = get_vec_m_data_addrs(bitmap_vec)+1; 			// Bits collection start at LBA[3] with length 4
-	for (int loop_counter = 0; loop_counter <= bitmap_vec->size; loop_counter++){
-		if(count == blockSize){
-			sprintf(&bit_str_array[count], "%c", '\0' );
-			char* temp_buff = malloc(strlen(bit_str_array));
-			strcpy(temp_buff,  bit_str_array);
-			//printf("LBA[%d]: %s\n", block_pos, temp_buff);
-			LBAwrite (temp_buff, 1, block_pos);			//LBAwrite (buff, bloks_num, block_position); buff hold data, bloks_num is the number of blocks, block_position is the starting position block
-			block_pos++;
-			memset (bit_str_array, 0, sizeof(temp_buff));
-			count = 0;
-			free(temp_buff);
-			temp_buff = NULL;
-		}
-		bit_str_array[count] = get_bit(bitmap_vec, loop_counter) + '0'; // Appends bit to a string
-		count++;
-	}
-
-	char* temp_buf = malloc(blockSize);
-	strcpy(temp_buf,  VEC_LOCATION); // VEC_LOCATION is a predefined string of char
-	sprintf(temp_buf +  strlen(temp_buf), "%d\n", get_vec_m_data_addrs(bitmap_vec));
-	strcpy(temp_buf + strlen(temp_buf),  VEC_SIZE); // VEC_SIZE is a predefined string of char
-	sprintf(temp_buf +  strlen(temp_buf), "%d\n", get_vector_size(bitmap_vec));
-	strcpy(temp_buf + strlen(temp_buf),  FREE_SECTORS); // FREE_SECTORS is a predefined string of char
-	sprintf(temp_buf +  strlen(temp_buf), "%d\n", get_num_free_blocks(bitmap_vec));
-
-	LBAwrite (temp_buf, 1, get_vec_m_data_addrs(bitmap_vec));  		// Writes Bitmap-vector meta-data to LBA[2]
-	free(temp_buf);
-	temp_buf = NULL;
-
-
-	//free_bitvector(bitmap_vec); ====> *** IMPORTANT *** remove comment after full debugging
-
-	NUM_OF_FREE_BLOCKS = get_num_free_blocks(bitmap_vec);			// Free Blocks Record
-	NUM_OF_BLOCKS_IN_VOLUME = get_vector_size(bitmap_vec);			// Total number of Blocks in Volume
-
 }
 
 

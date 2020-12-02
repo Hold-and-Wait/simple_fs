@@ -21,4 +21,3 @@ int b_seek (int fd, off_t offset, int whence);
 void b_close (int fd);
 
 #endif
-

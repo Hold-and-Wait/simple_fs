@@ -33,31 +33,35 @@
 # will delete the executable and any object files in your directory.
 #
 
-
-ROOTNAME=LBA/testDriver
+#
+## UNCOMMENT BELOW TO TEST DIRECTORY ENTRY
+ROOTNAME=fsLowDriver
 HW=
 FOPTION=
 RUNOPTIONS=SampleVolume 10000000 512
 CC=gcc
 CFLAGS= -g -I.
 LIBS =pthread
-DEPS = LBA/lba.h
-ADDOBJ= LBA/DirectoryEntries.c LBA/FreeSpaceManagement.c LBA/MasterBootRecord.c
+DEPS =
+ADDOBJ= fsLow.o bitmap_vector.o date.o fsMBR.o
 OBJ = $(ROOTNAME)$(HW)$(FOPTION).o $(ADDOBJ)
 
 %.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS) 
+	$(CC) -c -o $@ $< $(CFLAGS)
 
 $(ROOTNAME)$(HW)$(FOPTION): $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS) -lm -l readline -l $(LIBS)
 
 clean:
 	rm *.o $(ROOTNAME)$(HW)$(FOPTION)
+	rm utils/stack.o
+	rm LBA/DirectoryEntries.o
 
 run: $(ROOTNAME)$(HW)$(FOPTION)
 	./$(ROOTNAME)$(HW)$(FOPTION) $(RUNOPTIONS)
 
 
+## COMMENT THIS PORTION OUT
 # DEFAULTS:
 #ROOTNAME=fsLowDriver
 #HW=
@@ -67,7 +71,7 @@ run: $(ROOTNAME)$(HW)$(FOPTION)
 #CFLAGS= -g -I.
 #LIBS =pthread
 #DEPS =
-#ADDOBJ= fsLow.o
+#ADDOBJ= fsLow.o b_io.o bitmap_vector.o date.o fsLow.o fsLowDriver.o fsMBR.o 
 #OBJ = $(ROOTNAME)$(HW)$(FOPTION).o $(ADDOBJ)
 
 #%.o: %.c $(DEPS)

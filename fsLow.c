@@ -287,5 +287,3 @@ uint64_t LBAread (void * buffer, uint64_t lbaCount, uint64_t lbaPosition)
 	
 	return 0;
 	}
-
-

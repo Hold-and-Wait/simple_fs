@@ -69,6 +69,3 @@ uint64_t LBAread (void * buffer, uint64_t lbaCount, uint64_t lbaPosition);
 
 #define	PART_NOERROR 		0
 #define PART_ERR_INVALID	-4
-
-
-
