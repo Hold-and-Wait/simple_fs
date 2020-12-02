@@ -31,6 +31,14 @@ int b_open (char * filename, int flags) {
 }
 
 void b_init(){
+         // need to set the buffer size equal to block size of our system 
+         // buffer size = get volume control block -> blocksize
+
+         // initialize file control array/vector so it's all being free 
+         // for int i = 0; i < max file control block; i ++ 
+         // set the file control block sub i to start i.e. fcb[i].linuxFD = -1
+         // 
+         // start up the init function  startup = -1; 
 
 }
 
@@ -39,5 +47,6 @@ int startup = 0;
 int b_write(int fd, char * buffer, int count){
     if (startup == 0){
          b_init(); // to initialize the system
+       
     }
 }
