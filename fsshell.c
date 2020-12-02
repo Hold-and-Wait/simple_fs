@@ -731,7 +731,8 @@ int main (int argc, char * argv[])
 	//fs_mkdir("file08.txt", 10);
 
     int retVal = 0;
-    retVal = initSuperBlock(filename, &volumeSize, &blockSize, sbPtr, bitmap_vec);
+   	 retVal = initSuperBlock(filename, &volumeSize, &blockSize);
+	beginFSInit(filename, &volumeSize, &blockSize, sbPtr, bitmap_vec);
 	while (1)
 		{
 		cmdin = readline("Prompt > ");

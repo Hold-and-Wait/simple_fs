@@ -1,4 +1,3 @@
-
 /**************************************************************
  * Class:  CSC-415
  * Name: Jason Avina
@@ -21,6 +20,8 @@
 #include <unistd.h>
 #include <getopt.h>
 #include "bitmap_vector.h"
+#include "fsLow.h"
+
 
 
 typedef struct SuperBlock {
@@ -41,6 +42,6 @@ typedef struct SuperBlock {
 
 //only new file i've created in the fsMBR.c file
 
-int initSuperBlock(char * filename, u_int64_t * volSize, u_int64_t * blockSize, SuperBlock *sbPtr,  Bitvector * bitmap_vec);
-
+int beginFSInit(char * filename, uint64_t * volSize, uint64_t * blockSize, SuperBlock *sbPtr,  Bitvector * bitmap_vec);
+int initSuperBlock(char * filename, uint64_t * volSize, uint64_t * blockSize);
 #endif

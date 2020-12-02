@@ -23,41 +23,45 @@
 #include "fsMBR.h"
 #include "bitmap_vector.h"
 #include "date.h"
-#include "mfs.h"
+
+
+
 #ifndef uint64_t
 typedef u_int64_t uint64_t;
 #endif
 #ifndef uint32_t
 typedef u_int32_t uint32_t;
 #endif
+
+
+
 #define VOL_BLK 2048 // = VOL/BLOCK num of blocks
 #define START_BLK_FREE = 1;
 #define START_BLK_ROOT = 2;
 #define MAGICNUM = 0xabra;
 
+
+
 int NUM_OF_FREE_BLOCKS;
 int NUM_OF_BLOCKS_IN_VOLUME;
 
 
+
 //Initialize Free Space Manager
-int initSuperBlock(char * filename, uint64_t * volSize, uint64_t * blockSize, SuperBlock *sbPtr,  Bitvector * bitmap_vec);
-void initializeBitmapVecotr(uint64_t * volumeSize, uint64_t *blocksize, Bitvector *bitmap_vec);
+int beginFSInit(char * filename, uint64_t * volSize, uint64_t * blockSize, SuperBlock *sbPtr,  Bitvector * bitmap_vec);
+
+void initializeBitmapVector(uint64_t * volumeSize, uint64_t *blocksize, Bitvector *bitmap_vec);
 
 //all functions should follow this pattern where they return 0 if success
 //and -1 if fails until we have checked every aspect of the file system
 //and once everything passes, then we can start reading and writing to the file
 //system
-int initSuperBlock(char * filename, uint64_t * volSize, uint64_t * blockSize, struct SuperBlock *sbPtr,  Bitvector *bitmap_vec){
-	int startVal;
-	startVal = startPartitionSystem(filename, volSize, blockSize);
-	printf("here is the startVal: %d\n", startVal);
-	if (startVal < 0){
-		printf("Error: you did not create the volume");
-		return -1;
-	}
+int beginFSInit(char * filename, uint64_t * volSize, uint64_t * blockSize, SuperBlock* sbPtr,  Bitvector* bitmap_vec){
+	
+	int retVal;
+	retVal = initSuperBlock(filename, volSize, blockSize);
 
-	initializeBitmapVecotr(volSize, blockSize, bitmap_vec); 		// Initialize Free Space Manager
-
+	initializeBitmapVector(volSize, blockSize, bitmap_vec); 		// Initialize Free Space Manager
 	initializeDirectory(bitmap_vec, 7);
 
 	sbPtr->blockSize = *blockSize;
@@ -70,7 +74,7 @@ int initSuperBlock(char * filename, uint64_t * volSize, uint64_t * blockSize, st
 	sbPtr->TIME_ACCESSED = malloc((*blockSize)/4); // takes 32 bytes
 	getDate(sbPtr->DATE_ACCESSED);
 	getTime(sbPtr->TIME_ACCESSED);
-	return startVal;
+	return retVal;
 }
 
 
@@ -80,8 +84,20 @@ int initSuperBlock(char * filename, uint64_t * volSize, uint64_t * blockSize, st
  * Writes bytes to hard drive
  *
  */
+ 
+ 
+ 
+ int initSuperBlock(char * filename, uint64_t * volSize, uint64_t * blockSize) {
+	int startVal;
+	startVal = startPartitionSystem(filename, volSize, blockSize);
+	printf("here is the startVal: %d\n", startVal);
+	if (startVal < 0){
+		printf("Error: you did not create the volume");
+		return -1;
+	}
+ }
 
-void initializeBitmapVecotr(uint64_t * volumeSize, uint64_t *blocksize, Bitvector *bitmap_vec){
+void initializeBitmapVector(uint64_t * volumeSize, uint64_t *blocksize, Bitvector *bitmap_vec){
 	int blockSize = *blocksize;
 	int volSize = *volumeSize;
 						// gets number of blocks
@@ -139,4 +155,3 @@ void initializeBitmapVecotr(uint64_t * volumeSize, uint64_t *blocksize, Bitvecto
 void testMBRFunction() {
 	printf("MBR Test\n");
 }
-
