@@ -59,6 +59,7 @@ int dir_offload_configs();
 int dirent_check_is_init();
 int get_free_inode();
 void dir_modify_meta(fdDir * dir, struct fs_diriteminfo * updated_meta);
+void dir_printShort(char * pathname, int fllong, int flall);
 
 
 int fs_mkdir(char *pathname, mode_t mode);

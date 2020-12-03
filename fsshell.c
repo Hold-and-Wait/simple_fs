@@ -169,7 +169,6 @@ static int dispatchcount = sizeof (dispatchTable) / sizeof (dispatch_t);
 // Display files for use by ls command
 int displayFiles (fdDir * dirp, int flall, int fllong)
 	{
-    print_dir();
     return 1;
 	if (dirp == NULL)	//get out if error
 		return (-1);
@@ -281,11 +280,9 @@ int cmd_ls (int argcnt, char *argvec[])
 		//processing arguments after options
 		for (int k = optind; k < argcnt; k++)
 			{
-		    printf("%s!@#\n", argvec[k]);
-			if (fs_isDir(argvec[k]))
+                if (fs_isDir(argvec[k]))
 				{
 				fdDir * dirp;
-				printf("%s -- \n", argvec[k]);
 				dirp = fs_opendir (argvec[k]);
 				displayFiles (dirp, flall, fllong);
 				}
@@ -308,6 +305,7 @@ int cmd_ls (int argcnt, char *argvec[])
 		char * path = fs_getcwd(cwd, DIRMAX_LEN);	//get current working directory
 		fdDir * dirp;
 		dirp = fs_opendir (path);
+		dir_printShort(path, fllong, flall);
 		return (displayFiles (dirp, flall, fllong));
 		}
 	return 0;
@@ -733,6 +731,7 @@ int main (int argc, char * argv[])
     int retVal = 0;
    	 retVal = initSuperBlock(filename, &volumeSize, &blockSize);
 	beginFSInit(filename, &volumeSize, &blockSize, sbPtr, bitmap_vec);
+
 	while (1)
 		{
 		cmdin = readline("Prompt > ");

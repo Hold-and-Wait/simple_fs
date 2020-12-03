@@ -71,6 +71,7 @@ int reset_local_vars(b_io_fd f_descriptor);
  */
 int b_open (char * filename, int flags) {
 
+
     // .
     // ..
     // ,,
