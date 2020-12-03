@@ -733,13 +733,13 @@ int main (int argc, char * argv[])
 	beginFSInit(filename, &volumeSize, &blockSize, sbPtr, bitmap_vec);
 
 /* ***** HOW TO UPDATE A FILES SIZE:
-	fs_setcwd("dir1/dir_child");
+	fs_setcwd("dir1");
 	fs_mkfile("text5.txt", 10);
 	fdDir * dir_txt = fs_opendir("text5.txt");
 	struct fs_diriteminfo * new_meta = fs_readdir(dir_txt);
 	new_meta->file_size = 512;
 	dir_modify_meta(dir_txt, new_meta);
-*/
+/**/
 
 	while (1)
 		{

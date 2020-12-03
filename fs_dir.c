@@ -265,7 +265,7 @@ int fs_mkdir(char *pathname, mode_t mode) {
 
 			// write to lba
 			snprintf(meta_write_buffer, 513, "key=%s\nname=%s\ntype=%c\ninode=%d\npinode=%d\nsize=%d\nlbapos=%d\nblen=%d\nmdate=%s\ncdate=%s",
-					meta_key, dir_name, 'D', dir_iter->inode, dir_iter->parent_inode, 0, free_blocks[0], 1, "", "" );
+					meta_key, dir_name, 'D', dir_iter->inode, dir_iter->parent_inode, (int)sizeof(fdDir), free_blocks[0], 1, "", "" );
 			LBAwrite(meta_write_buffer, 1, free_blocks[0]);
                 	
 			free(meta_write_buffer);
@@ -1060,7 +1060,6 @@ void dir_modify_meta(fdDir * dir, struct fs_diriteminfo * updated_meta) {
     // update lba location, if needed
     fdDir * tableptr = dir_table;
     for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, tableptr++) {
-
         if (tableptr->inode == dir->inode) {
             tableptr->directoryStartLocation = dir->directoryStartLocation;
         }
@@ -1071,43 +1070,6 @@ void dir_modify_meta(fdDir * dir, struct fs_diriteminfo * updated_meta) {
              meta_key, current_meta->d_name, 'R', dir->inode, dir->parent_inode, current_meta->file_size, (int)dir->directoryStartLocation, updated_meta->d_reclen, "", "" );
     LBAwrite(meta_write_buffer, 1, dir->directoryStartLocation);
     free(meta_write_buffer);
-
-    // update dir parents
-    fdDir * parent_dir = dir;
-    tableptr = dir_table;
-    int found = 0;
-    for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, tableptr++) {
-        if (parent_dir->parent_inode == 0) {
-            break;
-        }
-
-        if (found == 1) {
-            found = 0;
-            tableptr = dir_table;
-        }
-
-        //printf("%d %d TEST\n", tableptr->inode, parent_dir->parent_inode);
-
-        if (parent_dir->parent_inode == tableptr->inode) {
-            char * meta_write_buffer2 = malloc(513);
-            struct fs_diriteminfo * p_meta = fs_readdir(tableptr);
-            p_meta->file_size += updated_meta->file_size;
-
-            snprintf(meta_write_buffer2, 513, "key=%s\nname=%s\ntype=%c\ninode=%d\npinode=%d\nsize=%d\nlbapos=%d\nblen=%d\nmdate=%s\ncdate=%s",
-                     meta_key, p_meta->d_name, 'D', tableptr->inode, tableptr->parent_inode, p_meta->file_size, (int)tableptr->directoryStartLocation, p_meta->d_reclen, "", "" );
-            LBAwrite(meta_write_buffer2, 1, tableptr->directoryStartLocation);
-            free(meta_write_buffer2);
-
-            parent_dir->parent_inode = tableptr->parent_inode;
-
-            found = 1;
-            i = 0;
-            //printf("NEW %d\n", parent_dir->parent_inode);
-        }
-
-        //printf("%d %d TEST2\n", tableptr->inode, parent_dir->parent_inode);
-
-    }
 }
 
 int fs_stat(const char *path, struct fs_stat * buf) {
