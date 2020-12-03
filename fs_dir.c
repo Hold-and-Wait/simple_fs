@@ -23,7 +23,6 @@
 
 //
 void dir_table_expand();
-
 int dir_is_init();
 int dir_load_config();
 int dir_is_valid_path(char * path, char * dir);
@@ -36,21 +35,27 @@ void dir_rm_helper (int inode_to_remove);
 #define DEF_PATH_SIZE 128
 #define DEF_DIR_TABLE_SIZE 10
 
-#define DEBUG_MODE 0
+#define DEBUG_MODE 0 // Set to 1 to enable directory debugging printfs
 
 Bitvector * bitmap;
 fs_stack * cwd_stack; /* A stack that contains inode ints */
 fdDir * dir_table; /* An array of directories */
 
-char init_key[] = "init=1";
-char meta_key[] = "!&92@&fbn1337_amX";
+char init_key[] = "init=1"; // check key to ensure directories has been initialized before
+char meta_key[] = "!&92@&fbn1337_amX";  // meta key, allows to find LBAs that are meta blocks
 
-int config_location;
+int config_location;    // stores the directory configuration location in the LBA
 int inode_index;
 int dir_count = 0;
 int num_table_expansions = 1;
 int is_initialized = 0;
 
+/*
+ * Initializes the directory.
+ * Args:
+ *  - An already initialized Bitvector
+ *  - int, the location in the LBA that contains configuration
+ */
 void initializeDirectory(Bitvector * vec, int LBA_Pos) {
 	config_location = LBA_Pos;
 	bitmap = vec;
@@ -70,6 +75,12 @@ void initializeDirectory(Bitvector * vec, int LBA_Pos) {
 	is_initialized = 1;
 }
 
+/*
+ * Checks if the config_location in LBA contains the init key.
+ * Return:
+ *  1:  has already been initialized before
+ *  0:  newly initialized
+ */
 int dir_is_init() {
 	char config_buffer[513];
 	config_buffer[512] = '\0';
@@ -88,6 +99,9 @@ int dir_is_init() {
 	return 0;
 }
 
+/*
+ * Loads the config into memory
+ */
 int dir_load_config() {
 	char config_buffer[513];
 	config_buffer[512] = '\0';
@@ -112,6 +126,9 @@ int dir_load_config() {
 	return 1;
 }
 
+/*
+ * Loads configs from memory into config_loc
+ */
 int dir_offload_configs() {
 	char * config_write_buffer = malloc(513);
 	config_write_buffer[512] = '\0';
@@ -124,6 +141,9 @@ int dir_offload_configs() {
 	return 1;
 }
 
+/*
+ * Expands the directory entries table by DEF_DIR_TABLE_SIZE
+ */
 void dir_table_expand() {
 	num_table_expansions++;
 	dir_table = realloc(dir_table, sizeof(fdDir) * DEF_DIR_TABLE_SIZE * num_table_expansions);
@@ -131,6 +151,16 @@ void dir_table_expand() {
 	    printf("%s Expanded directory table. New size: %d\n", PREFIX, DEF_DIR_TABLE_SIZE * num_table_expansions);
 }
 
+/*
+ * Moves a source directory/file into destination directory
+ * Args:
+ *  - char * src_directory
+ *  - char * destination_directory
+ * Return:
+ *  1:  Successful move
+ * -1:  Invalid destination
+ * -2:  Invalid source
+ */
 int dir_move(char * src_directory, char * destination_directory) {
 		
 	// verify dest
@@ -258,6 +288,14 @@ int dir_move(char * src_directory, char * destination_directory) {
 	return 1;
 }
 
+/*
+ * Creates a directory entry.
+ * Args:
+ *  - A pathname
+ *  - A mode, unused in current implementation
+ * Return:
+ *  -1: Uninitialized directory entries or invalid component in path
+ */
 int fs_mkdir(char *pathname, mode_t mode) {
 
 	if (!is_initialized) {
@@ -363,6 +401,14 @@ int fs_mkdir(char *pathname, mode_t mode) {
 	return -1;
 }
 
+/*
+ * Creates a directory entry of type REG.
+ * Args:
+ *  - A pathname
+ *  - Length of blocks it occupies
+ * Returns:
+ *  -1: Uninitialized directory entries or invalid path component
+ */
 int fs_mkfile(char *pathname, int block_len) {
 
 	if (!is_initialized) {
@@ -468,6 +514,9 @@ int fs_mkfile(char *pathname, int block_len) {
 	return -1;
 }
 
+/*
+ * Returns  the current working directory
+ */
 char * fs_getcwd(char *buf, size_t size) {
 
 	if (!is_initialized) {
@@ -517,6 +566,14 @@ char * fs_getcwd(char *buf, size_t size) {
     	return buf;
 }
 
+/*
+ * Removes  a directory.
+ * Args:
+ *  - A pathname
+ * Return:
+ *  0: pathname points to a non-directory
+ * -1: Invalid path component
+ */
 int fs_rmdir(char *pathname) {
     if (fs_isDir(pathname) == -1)
         return 0;
@@ -582,6 +639,11 @@ int fs_rmdir(char *pathname) {
 	return 0;
 }
 
+/*
+ * A recursive function that  removes directories within a given directory
+ * Args:
+ *  - The inode number of the directory to be removed
+ */
 void dir_rm_helper(int inode_to_remove) {
 	char * empty_buf = malloc(513);
 	empty_buf[512] = '\0';
@@ -609,6 +671,14 @@ void dir_rm_helper(int inode_to_remove) {
 	free(empty_buf);
 }
 
+/*
+ * Sets the working directory
+ * Args:
+ *  - A valid path
+ * Return:
+ *  0: Successful cwd change
+ * -1: Uninitialized directory or invalid path component
+ */
 int fs_setcwd(char *path) {
 
 	if (!is_initialized) {
@@ -676,6 +746,9 @@ int fs_setcwd(char *path) {
 	return 0;
 }
 
+/*
+ * Unused
+ */
 int dir_get_free_inode() {
     	int index_found = -1;
     	for (int i = 1; i < inode_index; i++) {
@@ -700,6 +773,12 @@ int dir_get_free_inode() {
     return  index_found;
 }
 
+/*
+ * Reloads directories from LBA into memory
+ *  by finding meta_key.
+ *  Returns:
+ *      - Number of directories loaded
+ */
 int dir_reload() {
 
 	int loaded_dir_counter = 0;
@@ -757,6 +836,9 @@ int dir_reload() {
 	return loaded_dir_counter;
 }
 
+/*
+ * Reads a directory's metadata
+ */
 struct fs_diriteminfo * fs_readdir(fdDir *dirp) {
 	struct fs_diriteminfo * dirent_info = malloc(sizeof(struct fs_diriteminfo));
 	int lba_to_read = dirp->directoryStartLocation;
@@ -807,10 +889,9 @@ struct fs_diriteminfo * fs_readdir(fdDir *dirp) {
 	return dirent_info;
 }
 
-void dir_printLong(char * pathname) {
-    printf("LONG\n");
-}
-
+/*
+ * Prints ls
+ */
 void dir_printShort(char * pathname,  int fllong, int  flall) {
 
     if (fs_isDir(pathname) == -1)
@@ -901,6 +982,11 @@ void dir_printShort(char * pathname,  int fllong, int  flall) {
 
 }
 
+/*
+ * Opens a directory stream.
+ * Return:
+ *  - An array of directories that contain the children of the directory opened
+ */
 fdDir * fs_opendir(const char *name) {
 
     fdDir * dir_item = malloc(sizeof(fdDir));
@@ -960,6 +1046,9 @@ int fs_closedir(fdDir *dirp) {
     return -1;
 }
 
+/*
+ * Checks if path is a valid file
+ */
 int fs_isFile(char * path) {
     	fs_stack * cwd_temp;
     	int dir_count = 0;
@@ -1099,6 +1188,9 @@ int fs_isDir(char * path) {
 	return is_found;
 }
 
+/*
+ * Removes a directory of type REG
+ */
 int fs_delete(char * filename) {
     int inode_of_file = fs_isFile(filename); // -1 if invalid, inode # if valid
     if (inode_of_file == -1)
@@ -1134,6 +1226,12 @@ int fs_delete(char * filename) {
     return 0;
 }
 
+/*
+ * Modifies the meta data of directory
+ * Args:
+ *  - dir: the directory to be modified
+ *  - updated meta: The new meta of the directory
+ */
 void dir_modify_meta(fdDir * dir, struct fs_diriteminfo * updated_meta) {
     char * meta_write_buffer = malloc(513);
     struct fs_diriteminfo * current_meta = fs_readdir(dir);
@@ -1207,6 +1305,9 @@ int fs_stat(const char *path, struct fs_stat * buf) {
     	return 1;
 }
 
+/*
+ * Prints all the directories
+ */
 void print_dir() {
     char * buf = malloc(513);
     printf("%s Printing Directory Entries Table:\n", PREFIX);
