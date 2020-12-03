@@ -160,55 +160,63 @@ void dir_table_expand() {
  *  1:  Successful move
  * -1:  Invalid destination
  * -2:  Invalid source
+ * -3: Cannot move src to its child
  */
 int dir_move(char * src_directory, char * destination_directory) {
 		
-	// verify dest
+	// verify src
 	fs_stack * stack_path_temp;
 	int f_slash_counter = 0;
 
-	for (int i = 0; i < strlen(destination_directory); i++) {
-		if (destination_directory[i] == '/') {
-			if (i == 0 || i == strlen(destination_directory)-1)
+	for (int i = 0; i < strlen(src_directory); i++) {
+		if (src_directory[i] == '/') {
+			if (i == 0 || i == strlen(src_directory)-1)
 				continue;
 			f_slash_counter++;
 		}
 	}
 	
 	
-	if (destination_directory[0] == '/') {
+	if (src_directory[0] == '/') {
         stack_path_temp = stack_create(DEF_PATH_SIZE);
         stack_push(0, stack_path_temp);
     } else
 		stack_path_temp = stack_copy(cwd_stack);
 		
-	char path_c[strlen(destination_directory)];
-	strcpy(path_c, destination_directory);
-	fdDir * destination;
+	char path_c[strlen(src_directory)];
+	strcpy(path_c, src_directory);
+	fdDir * src;
 	
 	char * saveptr;
 	char * dir_name = strtok_r(path_c, "/", &saveptr);
 	int is_found = 0;
 	while (dir_name != NULL) {
-	    is_found = 0;
-		fdDir * dir_iter = dir_table;
-		for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, dir_iter++) {
-		    if (dir_iter->is_used != 1)
-		        continue;
+        if (strcmp(dir_name, "..") == 0) {
+            stack_pop(stack_path_temp);
+            dir_name = strtok_r(NULL, "/", &saveptr);
+            if (stack_peek(stack_path_temp) == -1)
+                return -2;
+        } else {
+            is_found = 0;
+            fdDir *dir_iter = dir_table;
+            for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, dir_iter++) {
+                if (dir_iter->is_used != 1)
+                    continue;
 
-			struct fs_diriteminfo * meta = fs_readdir(dir_iter);
-			if (strcmp(meta->d_name, dir_name) == 0 && dir_iter->parent_inode == stack_peek(stack_path_temp)) {
-			    is_found = 1;
-                stack_push(dir_iter->inode, stack_path_temp);
-			    destination = dir_iter;
-			}
-		}
+                struct fs_diriteminfo *meta = fs_readdir(dir_iter);
+                if (strcmp(meta->d_name, dir_name) == 0 && dir_iter->parent_inode == stack_peek(stack_path_temp)) {
+                    is_found = 1;
+                    stack_push(dir_iter->inode, stack_path_temp);
+                    src = dir_iter;
+                }
+            }
 
-		if (is_found == 0) {
-            if (DEBUG_MODE)
-                printf("%s mv error: dest %s is invalid.\n", PREFIX, dir_name);
-		    return -1;
-		}
+            if (is_found == 0) {
+                if (DEBUG_MODE)
+                    printf("%s mv error: src %s is invalid.\n", PREFIX, dir_name);
+                return -1;
+            }
+        }
 
 		dir_name = strtok_r(NULL, "/", &saveptr);
 	}
@@ -216,54 +224,69 @@ int dir_move(char * src_directory, char * destination_directory) {
 
 
 
-    // verify src
+    // verify dest
     fs_stack * stack_path_temp2;
     f_slash_counter = 0;
 
-    for (int i = 0; i < strlen(src_directory); i++) {
-        if (src_directory[i] == '/') {
-            if (i == 0 || i == strlen(src_directory)-1)
+    for (int i = 0; i < strlen(destination_directory); i++) {
+        if (destination_directory[i] == '/') {
+            if (i == 0 || i == strlen(destination_directory)-1)
                 continue;
             f_slash_counter++;
         }
     }
 
 
-    if (src_directory[0] == '/') {
-        if (strlen(src_directory) == 1)
+    if (destination_directory[0] == '/') {
+        if (strlen(destination_directory) == 1)
             return -1;
         stack_path_temp2 = stack_create(DEF_PATH_SIZE);
         stack_push(0, stack_path_temp2);
     } else
         stack_path_temp2 = stack_copy(cwd_stack);
 
-    char path_d[strlen(src_directory)];
-    strcpy(path_d, src_directory);
-    fdDir * src;
+    char path_d[strlen(destination_directory)];
+    strcpy(path_d, destination_directory);
+    fdDir * destination;
 
     char * saveptr2;
     dir_name = strtok_r(path_d, "/", &saveptr2);
     is_found = 0;
     while (dir_name != NULL) {
-        is_found = 0;
-        fdDir * dir_iter = dir_table;
-        for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, dir_iter++) {
-            if (dir_iter->is_used != 1)
-                continue;
+        if (strcmp(dir_name, "..") == 0) {
+            stack_pop(stack_path_temp2);
+            if (stack_peek(stack_path_temp2) == -1)
+                return -2;
+            dir_name = strtok_r(NULL, "/", &saveptr);
+        }
 
-            struct fs_diriteminfo * meta = fs_readdir(dir_iter);
-            if (strcmp(meta->d_name, dir_name) == 0 && dir_iter->parent_inode == stack_peek(stack_path_temp2)) {
-                stack_push(dir_iter->inode, stack_path_temp2);
-                is_found = 1;
-                src = dir_iter;
+            is_found = 0;
+            fdDir *dir_iter = dir_table;
+            for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, dir_iter++) {
+                if (dir_iter->is_used != 1)
+                    continue;
+
+                struct fs_diriteminfo *meta = fs_readdir(dir_iter);
+                if (strcmp(meta->d_name, dir_name) == 0 && dir_iter->parent_inode == stack_peek(stack_path_temp2)) {
+                    stack_push(dir_iter->inode, stack_path_temp2);
+                    is_found = 1;
+                    destination = dir_iter;
+                }
             }
-        }
 
-        if (is_found == 0) {
-            if (DEBUG_MODE)
-                printf("%s mv error: src %s is invalid.\n", PREFIX, dir_name);
-            return -2;
-        }
+            //printf("%d %d\n", destination->parent_inode, src->inode);
+            if (destination->parent_inode == src->inode) {
+                if (DEBUG_MODE)
+                    printf("%s mv error: cannot move directory to its child.\n", PREFIX);
+                return -3;
+            }
+
+
+            if (is_found == 0) {
+                if (DEBUG_MODE)
+                    printf("%s mv error: dest %s is invalid.\n", PREFIX, dir_name);
+                return -2;
+            }
 
         dir_name = strtok_r(NULL, "/", &saveptr2);
     }

@@ -375,6 +375,9 @@ int cmd_mv (int argcnt, char *argvec[])
     } else if (mv_stat == -2){
         printf("Invalid source %s.\n", argvec[1]);
         return -1;
+    } else if (mv_stat == -3){
+        printf("Cannot move src to its child\n");
+        return -1;
     }
 #endif
 	}
@@ -749,7 +752,6 @@ int main (int argc, char * argv[])
         long long x = pow(2, i);
         if (x >= volumeSize) {
             volumeSize = x;
-            printf("%lld\n", x);
             break;
         }
     }
@@ -780,6 +782,7 @@ int main (int argc, char * argv[])
 	meta->file_size = 512;
 	dir_modify_meta(dir_of_file, meta);
 */
+
 
 	while (1)
 		{
