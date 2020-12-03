@@ -764,12 +764,15 @@ void dir_printShort(char * pathname,  int fllong, int  flall) {
     if (pathname[0] == '/' && strlen(pathname) == 1) {
         fdDir * stream = fs_opendir("/");
         for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, stream++) {
-            if (stream->is_used !=  1)
+            if (stream->is_used != 1 || (stream->parent_inode == 0 && stream->inode == 0))
                 continue;
 
             if (stream->parent_inode == 0) {
                 struct fs_diriteminfo * dir_meta = fs_readdir(stream);
-                printf("%s\n", dir_meta->d_name);
+                if (fllong)
+                    printf("%s  %9u    ", dir_meta->fileType=='D'?"D":"-", dir_meta->file_size);
+                printf("%s", dir_meta->d_name);
+                printf("\n");
             }
         }
         return;
@@ -806,8 +809,13 @@ void dir_printShort(char * pathname,  int fllong, int  flall) {
             continue;
 
         dir_info = fs_readdir(dir_iter);
-        if (dir_iter->parent_inode == cdir->inode)
-            printf("%s\n", dir_info->d_name);
+        if (dir_iter->parent_inode == cdir->inode) {
+            struct fs_diriteminfo * dir_meta = fs_readdir(dir_iter);
+            if (fllong)
+                printf("%s  %9u    ", dir_meta->fileType=='D'?"D":"-", dir_meta->file_size);
+            printf("%s", dir_meta->d_name);
+            printf("\n");
+        }
     }
 
 }
@@ -1058,10 +1066,48 @@ void dir_modify_meta(fdDir * dir, struct fs_diriteminfo * updated_meta) {
         }
     }
 
+    current_meta->file_size += updated_meta->file_size;
     snprintf(meta_write_buffer, 513, "key=%s\nname=%s\ntype=%c\ninode=%d\npinode=%d\nsize=%d\nlbapos=%d\nblen=%d\nmdate=%s\ncdate=%s",
-             meta_key, current_meta->d_name, 'R', dir->inode, dir->parent_inode, updated_meta->file_size, (int)dir->directoryStartLocation, updated_meta->d_reclen, "", "" );
+             meta_key, current_meta->d_name, 'R', dir->inode, dir->parent_inode, current_meta->file_size, (int)dir->directoryStartLocation, updated_meta->d_reclen, "", "" );
     LBAwrite(meta_write_buffer, 1, dir->directoryStartLocation);
     free(meta_write_buffer);
+
+    // update dir parents
+    fdDir * parent_dir = dir;
+    tableptr = dir_table;
+    int found = 0;
+    for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, tableptr++) {
+        if (parent_dir->parent_inode == 0) {
+            break;
+        }
+
+        if (found == 1) {
+            found = 0;
+            tableptr = dir_table;
+        }
+
+        //printf("%d %d TEST\n", tableptr->inode, parent_dir->parent_inode);
+
+        if (parent_dir->parent_inode == tableptr->inode) {
+            char * meta_write_buffer2 = malloc(513);
+            struct fs_diriteminfo * p_meta = fs_readdir(tableptr);
+            p_meta->file_size += updated_meta->file_size;
+
+            snprintf(meta_write_buffer2, 513, "key=%s\nname=%s\ntype=%c\ninode=%d\npinode=%d\nsize=%d\nlbapos=%d\nblen=%d\nmdate=%s\ncdate=%s",
+                     meta_key, p_meta->d_name, 'D', tableptr->inode, tableptr->parent_inode, p_meta->file_size, (int)tableptr->directoryStartLocation, p_meta->d_reclen, "", "" );
+            LBAwrite(meta_write_buffer2, 1, tableptr->directoryStartLocation);
+            free(meta_write_buffer2);
+
+            parent_dir->parent_inode = tableptr->parent_inode;
+
+            found = 1;
+            i = 0;
+            //printf("NEW %d\n", parent_dir->parent_inode);
+        }
+
+        //printf("%d %d TEST2\n", tableptr->inode, parent_dir->parent_inode);
+
+    }
 }
 
 int fs_stat(const char *path, struct fs_stat * buf) {
