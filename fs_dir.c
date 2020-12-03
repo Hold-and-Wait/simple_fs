@@ -131,11 +131,9 @@ void dir_table_expand() {
 	    printf("%s Expanded directory table. New size: %d\n", PREFIX, DEF_DIR_TABLE_SIZE * num_table_expansions);
 }
 
-int dir_move(fdDir * dirp, char * destination_directory) {
-	if (dirp == NULL)
-		return -1;
+int dir_move(char * src_directory, char * destination_directory) {
 		
-	// verify valid path
+	// verify dest
 	fs_stack * stack_path_temp;
 	int f_slash_counter = 0;
 
@@ -148,33 +146,116 @@ int dir_move(fdDir * dirp, char * destination_directory) {
 	}
 	
 	
-	if (destination_directory[0] == '/')
-		stack_path_temp = stack_create(DEF_PATH_SIZE);
-	else
+	if (destination_directory[0] == '/') {
+        stack_path_temp = stack_create(DEF_PATH_SIZE);
+        stack_push(0, stack_path_temp);
+    } else
 		stack_path_temp = stack_copy(cwd_stack);
 		
 	char path_c[strlen(destination_directory)];
 	strcpy(path_c, destination_directory);
+	fdDir * destination;
 	
 	char * saveptr;
 	char * dir_name = strtok_r(path_c, "/", &saveptr);
-	
+	int is_found = 0;
 	while (dir_name != NULL) {
-		
+	    is_found = 0;
 		fdDir * dir_iter = dir_table;
 		for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, dir_iter++) {
-			if (f_slash_counter > 0) {
-				
-				f_slash_counter--;
-			} else {
-			
+		    if (dir_iter->is_used != 1)
+		        continue;
+
+			struct fs_diriteminfo * meta = fs_readdir(dir_iter);
+			if (strcmp(meta->d_name, dir_name) == 0 && dir_iter->parent_inode == stack_peek(stack_path_temp)) {
+			    is_found = 1;
+                stack_push(dir_iter->inode, stack_path_temp);
+			    destination = dir_iter;
 			}
 		}
-		
-		char * dir_name = strtok_r(path_c, "/", &saveptr);
+
+		if (is_found == 0) {
+            if (DEBUG_MODE)
+                printf("%s mv error: dest %s is invalid.\n", PREFIX, dir_name);
+		    return -1;
+		}
+
+		dir_name = strtok_r(NULL, "/", &saveptr);
 	}
-	
-	return -1;
+
+
+
+
+    // verify src
+    fs_stack * stack_path_temp2;
+    f_slash_counter = 0;
+
+    for (int i = 0; i < strlen(src_directory); i++) {
+        if (src_directory[i] == '/') {
+            if (i == 0 || i == strlen(src_directory)-1)
+                continue;
+            f_slash_counter++;
+        }
+    }
+
+
+    if (src_directory[0] == '/') {
+        if (strlen(src_directory) == 1)
+            return -1;
+        stack_path_temp2 = stack_create(DEF_PATH_SIZE);
+        stack_push(0, stack_path_temp2);
+    } else
+        stack_path_temp2 = stack_copy(cwd_stack);
+
+    char path_d[strlen(src_directory)];
+    strcpy(path_d, src_directory);
+    fdDir * src;
+
+    char * saveptr2;
+    dir_name = strtok_r(path_d, "/", &saveptr2);
+    is_found = 0;
+    while (dir_name != NULL) {
+        is_found = 0;
+        fdDir * dir_iter = dir_table;
+        for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, dir_iter++) {
+            if (dir_iter->is_used != 1)
+                continue;
+
+            struct fs_diriteminfo * meta = fs_readdir(dir_iter);
+            if (strcmp(meta->d_name, dir_name) == 0 && dir_iter->parent_inode == stack_peek(stack_path_temp2)) {
+                stack_push(dir_iter->inode, stack_path_temp2);
+                is_found = 1;
+                src = dir_iter;
+            }
+        }
+
+        if (is_found == 0) {
+            if (DEBUG_MODE)
+                printf("%s mv error: src %s is invalid.\n", PREFIX, dir_name);
+            return -2;
+        }
+
+        dir_name = strtok_r(NULL, "/", &saveptr2);
+    }
+
+    //mv
+    char * meta_write_buffer = malloc(513);
+    struct fs_diriteminfo * current_meta = fs_readdir(src);
+
+    if (destination_directory[0] == '/' && strlen(destination_directory) == 1) {
+        src->parent_inode = 0;
+        current_meta->parent_inode = 0;
+    } else {
+        src->parent_inode = destination->inode;
+        current_meta->parent_inode = destination->inode;
+    }
+
+    snprintf(meta_write_buffer, 513, "key=%s\nname=%s\ntype=%c\ninode=%d\npinode=%d\nsize=%d\nlbapos=%d\nblen=%d\nmdate=%s\ncdate=%s",
+             meta_key, current_meta->d_name, current_meta->fileType, src->inode, src->parent_inode, current_meta->file_size, (int)src->directoryStartLocation, current_meta->d_reclen, "", "" );
+    LBAwrite(meta_write_buffer, 1, src->directoryStartLocation);
+    free(meta_write_buffer);
+
+	return 1;
 }
 
 int fs_mkdir(char *pathname, mode_t mode) {

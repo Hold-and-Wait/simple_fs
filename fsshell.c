@@ -121,7 +121,7 @@
 /****   SET THESE TO 1 WHEN READY TO TEST THAT COMMAND ****/
 #define CMDLS_ON	1
 #define CMDCP_ON	0
-#define CMDMV_ON	0
+#define CMDMV_ON	1
 #define CMDMD_ON	1
 #define CMDRM_ON	1
 #define CMDCP2L_ON	0
@@ -363,9 +363,19 @@ int cmd_cp (int argcnt, char *argvec[])
 ****************************************************/
 int cmd_mv (int argcnt, char *argvec[])
 	{
-#if (CMDMV_ON == 1)				
-	return -99;
-	// **** TODO ****  For you to implement	
+#if (CMDMV_ON == 1)
+	if (argvec[1] == NULL || argvec[2] == NULL) {
+	    printf("Usage: mv src dest\n");
+        return -1;
+    }
+	int mv_stat = dir_move(argvec[1], argvec[2]);
+    if (mv_stat == -1) {
+        printf("Invalid destination %s.\n", argvec[2]);
+        return -1;
+    } else {
+        printf("Invalid source %s.\n", argvec[1]);
+        return -1;
+    }
 #endif
 	}
 
@@ -739,7 +749,7 @@ int main (int argc, char * argv[])
 	struct fs_diriteminfo * new_meta = fs_readdir(dir_txt);
 	new_meta->file_size = 512;
 	dir_modify_meta(dir_txt, new_meta);
-/**/
+*/
 
 	while (1)
 		{
