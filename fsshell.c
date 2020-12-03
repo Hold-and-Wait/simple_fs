@@ -372,7 +372,7 @@ int cmd_mv (int argcnt, char *argvec[])
     if (mv_stat == -1) {
         printf("Invalid destination %s.\n", argvec[2]);
         return -1;
-    } else {
+    } else if (mv_stat == -2){
         printf("Invalid source %s.\n", argvec[1]);
         return -1;
     }
