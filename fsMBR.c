@@ -23,6 +23,7 @@
 #include "fsMBR.h"
 #include "bitmap_vector.h"
 #include "date.h"
+#include "mfs.h"
 
 
 
@@ -62,6 +63,13 @@ int beginFSInit(char * filename, uint64_t * volSize, uint64_t * blockSize, Super
 	retVal = initSuperBlock(filename, volSize, blockSize);
 
 	initializeBitmapVector(volSize, blockSize, bitmap_vec); 		// Initialize Free Space Manager
+
+    for (int i = 0; i < 100; i++) {
+        char * buf = malloc(512);
+        LBAread(buf, 1, i);
+        //printf("[LBA %d] - %s\n",i, buf);
+    }
+
 	initializeDirectory(bitmap_vec, 7);
 
 	sbPtr->blockSize = *blockSize;
@@ -119,7 +127,7 @@ void initializeBitmapVector(uint64_t * volumeSize, uint64_t *blocksize, Bitvecto
 			char* temp_buff = malloc(strlen(bit_str_array));
 			strcpy(temp_buff,  bit_str_array);
 			//printf("LBA[%d]: %s\n", block_pos, temp_buff);
-			LBAwrite (temp_buff, 1, block_pos);			//LBAwrite (buff, bloks_num, block_position); buff hold data, bloks_num is the number of blocks, block_position is the starting position block
+			//LBAwrite (temp_buff, 1, block_pos);			//LBAwrite (buff, bloks_num, block_position); buff hold data, bloks_num is the number of blocks, block_position is the starting position block
 			block_pos++;
 			memset (bit_str_array, 0, sizeof(temp_buff));
 			count = 0;

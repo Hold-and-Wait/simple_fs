@@ -1,3 +1,15 @@
+/**************************************************************
+* Class:  CSC-415
+* Name: Mark Jovero
+* Student ID:   916691664
+* Project: Basic File System
+*
+* File: stack.c
+*
+* Description: A stack implementation
+*
+**************************************************************/
+
 typedef struct {
     int capacity;
     int current_size;

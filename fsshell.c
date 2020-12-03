@@ -716,19 +716,50 @@ void processcommand (char * cmd)
 
 int main (int argc, char * argv[])
 	{
+
+    char *filename;
+    uint64_t blockSize;
+    uint64_t volumeSize;
+
+    if (argc == 2) { // set defaults
+        filename = "simple_fs";
+        volumeSize = 1048576;
+        blockSize = 512;
+    } else if (argc == 3) {
+        filename = argv[1];
+
+        volumeSize = atol(argv[2]);
+        if (volumeSize == 0)
+            volumeSize = 1048576;
+        blockSize = 512;
+    } else if (argc == 4) {
+        filename = argv[1];
+
+        volumeSize = atol(argv[2]);
+        if (volumeSize == 0)
+            volumeSize = 1048576;
+
+        blockSize = atoi(argv[3]);
+        if (blockSize == 0)
+            blockSize = 512;
+    }
+
+    // round volume up to nearest 2^x
+    for (int i = 0; i < 128; i++) {
+        long long x = pow(2, i);
+        if (x >= volumeSize) {
+            volumeSize = x;
+            printf("%lld\n", x);
+            break;
+        }
+    }
+
 	char * cmdin;
 	char * cmd;
 	HIST_ENTRY *he;
 		
 	using_history();
 	stifle_history(200);	//max history entries
-        char *filename;
-        // init
-	uint64_t blockSize;
-	uint64_t volumeSize;
-	filename = "simple_fs";
-	volumeSize = 1048576;
-	blockSize = 512;
 
 	SuperBlock *sbPtr = malloc(blockSize);
 
@@ -739,16 +770,15 @@ int main (int argc, char * argv[])
 	//fs_mkdir("file08.txt", 10);
 
     int retVal = 0;
-   	 retVal = initSuperBlock(filename, &volumeSize, &blockSize);
+    //retVal = initSuperBlock(filename, &volumeSize, &blockSize);
 	beginFSInit(filename, &volumeSize, &blockSize, sbPtr, bitmap_vec);
 
 /* ***** HOW TO UPDATE A FILES SIZE:
-	fs_setcwd("dir1");
 	fs_mkfile("text5.txt", 10);
-	fdDir * dir_txt = fs_opendir("text5.txt");
-	struct fs_diriteminfo * new_meta = fs_readdir(dir_txt);
-	new_meta->file_size = 512;
-	dir_modify_meta(dir_txt, new_meta);
+	fdDir * dir_of_file = fs_opendir("text5.txt");
+	struct fs_diriteminfo * meta = fs_readdir(dir_txt);
+	meta->file_size = 512;
+	dir_modify_meta(dir_of_file, meta);
 */
 
 	while (1)

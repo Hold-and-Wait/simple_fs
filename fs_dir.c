@@ -42,7 +42,7 @@ fs_stack * cwd_stack; /* A stack that contains inode ints */
 fdDir * dir_table; /* An array of directories */
 
 char init_key[] = "init=1"; // check key to ensure directories has been initialized before
-char meta_key[] = "!&92@&fbn1337_amX";  // meta key, allows to find LBAs that are meta blocks
+char meta_key[] = "!&92@&1337!";  // meta key, allows to find LBAs that are meta blocks
 
 int config_location;    // stores the directory configuration location in the LBA
 int inode_index;
@@ -280,8 +280,8 @@ int dir_move(char * src_directory, char * destination_directory) {
         current_meta->parent_inode = destination->inode;
     }
 
-    snprintf(meta_write_buffer, 513, "key=%s\nname=%s\ntype=%c\ninode=%d\npinode=%d\nsize=%d\nlbapos=%d\nblen=%d\nmdate=%s\ncdate=%s",
-             meta_key, current_meta->d_name, current_meta->fileType, src->inode, src->parent_inode, current_meta->file_size, (int)src->directoryStartLocation, current_meta->d_reclen, "", "" );
+    snprintf(meta_write_buffer, 513, "key=%s\nname=%s\ntype=%c\ninode=%d\npinode=%d\nsize=%d\nlbapos=%d\nblen=%d\nmdate=%s",
+             meta_key, current_meta->d_name, current_meta->fileType, src->inode, src->parent_inode, current_meta->file_size, (int)src->directoryStartLocation, current_meta->d_reclen, current_meta->st_mod_time );
     LBAwrite(meta_write_buffer, 1, src->directoryStartLocation);
     free(meta_write_buffer);
 
@@ -381,12 +381,21 @@ int fs_mkdir(char *pathname, mode_t mode) {
 				
 				break;
 			}
+            char * date_ = malloc(15);
+            char * time_ = malloc(15);
+            char * date_time = malloc(30);
+            getDate(date_);
+            getTime(time_);
+            snprintf(date_time, 30, "%s %s", date_, time_);
 
 			// write to lba
-			snprintf(meta_write_buffer, 513, "key=%s\nname=%s\ntype=%c\ninode=%d\npinode=%d\nsize=%d\nlbapos=%d\nblen=%d\nmdate=%s\ncdate=%s",
-					meta_key, dir_name, 'D', dir_iter->inode, dir_iter->parent_inode, (int)sizeof(fdDir), free_blocks[0], 1, "", "" );
+			snprintf(meta_write_buffer, 513, "key=%s\nname=%s\ntype=%c\ninode=%d\npinode=%d\nsize=%d\nlbapos=%d\nblen=%d\nmdate=%s",
+					meta_key, dir_name, 'D', dir_iter->inode, dir_iter->parent_inode, (int)sizeof(fdDir), free_blocks[0], 1, date_time);
 			LBAwrite(meta_write_buffer, 1, free_blocks[0]);
-                	
+
+			free(date_time);
+			free(date_);
+			free(time_);
 			free(meta_write_buffer);
 
             if (DEBUG_MODE)
@@ -494,12 +503,21 @@ int fs_mkfile(char *pathname, int block_len) {
 				
 				break;
 			}
+            char * date_ = malloc(15);
+            char * time_ = malloc(15);
+            char * date_time = malloc(30);
+            getDate(date_);
+            getTime(time_);
+            snprintf(date_time, 30, "%s %s", date_, time_);
 
 			// write to lba
-			snprintf(meta_write_buffer, 513, "key=%s\nname=%s\ntype=%c\ninode=%d\npinode=%d\nsize=%d\nlbapos=%d\nblen=%d\nmdate=%s\ncdate=%s",
-					meta_key, dir_name, 'R', dir_iter->inode, dir_iter->parent_inode, 0, free_blocks[0], block_len, "", "" );
+			snprintf(meta_write_buffer, 513, "key=%s\nname=%s\ntype=%c\ninode=%d\npinode=%d\nsize=%d\nlbapos=%d\nblen=%d\nmdate=%s",
+					meta_key, dir_name, 'R', dir_iter->inode, dir_iter->parent_inode, 0, free_blocks[0], block_len, date_time);
 			LBAwrite(meta_write_buffer, 1, free_blocks[0]);
-                	
+
+            free(date_time);
+            free(date_);
+            free(time_);
 			free(meta_write_buffer);
 
             if (DEBUG_MODE)
@@ -882,6 +900,10 @@ struct fs_diriteminfo * fs_readdir(fdDir *dirp) {
 			meta_val = strtok_r(NULL, "=\n", &saveptr);
 			dirent_info->file_size = (unsigned) atoi(meta_val);
 		}
+        else if (strstr(meta_val, "mdate") != NULL) {
+            meta_val = strtok_r(NULL, "=\n", &saveptr);
+            dirent_info->st_mod_time = meta_val;
+        }
 		meta_val = strtok_r(NULL, "=\n", &saveptr);
 	}
 	
@@ -932,7 +954,7 @@ void dir_printShort(char * pathname,  int fllong, int  flall) {
             if (stream->parent_inode == 0) {
                 struct fs_diriteminfo * dir_meta = fs_readdir(stream);
                 if (fllong)
-                    printf("%s  %9u    ", dir_meta->fileType=='D'?"D":"-", dir_meta->file_size);
+                    printf("%s  %9u    %s   ", dir_meta->fileType=='D'?"D":"-", dir_meta->file_size, dir_meta->st_mod_time);
                 printf("%s", dir_meta->d_name);
                 printf("\n");
             }
@@ -974,7 +996,7 @@ void dir_printShort(char * pathname,  int fllong, int  flall) {
         if (dir_iter->parent_inode == cdir->inode) {
             struct fs_diriteminfo * dir_meta = fs_readdir(dir_iter);
             if (fllong)
-                printf("%s  %9u    ", dir_meta->fileType=='D'?"D":"-", dir_meta->file_size);
+                printf("%s  %9u    %s   ", dir_meta->fileType=='D'?"D":"-", dir_meta->file_size, dir_meta->st_mod_time);
             printf("%s", dir_meta->d_name);
             printf("\n");
         }
@@ -1244,10 +1266,21 @@ void dir_modify_meta(fdDir * dir, struct fs_diriteminfo * updated_meta) {
         }
     }
 
+    char * date_ = malloc(15);
+    char * time_ = malloc(15);
+    char * date_time = malloc(30);
+    getDate(date_);
+    getTime(time_);
+    snprintf(date_time, 30, "%s %s", date_, time_);
+
     current_meta->file_size += updated_meta->file_size;
-    snprintf(meta_write_buffer, 513, "key=%s\nname=%s\ntype=%c\ninode=%d\npinode=%d\nsize=%d\nlbapos=%d\nblen=%d\nmdate=%s\ncdate=%s",
-             meta_key, current_meta->d_name, 'R', dir->inode, dir->parent_inode, current_meta->file_size, (int)dir->directoryStartLocation, updated_meta->d_reclen, "", "" );
+    snprintf(meta_write_buffer, 513, "key=%s\nname=%s\ntype=%c\ninode=%d\npinode=%d\nsize=%d\nlbapos=%d\nblen=%d\nmdate=%s",
+             meta_key, current_meta->d_name, 'R', dir->inode, dir->parent_inode, current_meta->file_size, (int)dir->directoryStartLocation, updated_meta->d_reclen, date_time );
     LBAwrite(meta_write_buffer, 1, dir->directoryStartLocation);
+
+    free(date_time);
+    free(date_);
+    free(time_);
     free(meta_write_buffer);
 }
 
