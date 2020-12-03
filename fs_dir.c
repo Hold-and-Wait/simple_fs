@@ -977,7 +977,7 @@ void dir_printShort(char * pathname,  int fllong, int  flall) {
             if (stream->parent_inode == 0) {
                 struct fs_diriteminfo * dir_meta = fs_readdir(stream);
                 if (fllong)
-                    printf("%s  %9u    %s   ", dir_meta->fileType=='D'?"D":"-", dir_meta->file_size, dir_meta->st_mod_time);
+                    printf("%s  %9u    ", dir_meta->fileType=='D'?"D":"-", dir_meta->file_size);
                 printf("%s", dir_meta->d_name);
                 printf("\n");
             }
@@ -1019,7 +1019,7 @@ void dir_printShort(char * pathname,  int fllong, int  flall) {
         if (dir_iter->parent_inode == cdir->inode) {
             struct fs_diriteminfo * dir_meta = fs_readdir(dir_iter);
             if (fllong)
-                printf("%s  %9u    %s   ", dir_meta->fileType=='D'?"D":"-", dir_meta->file_size, dir_meta->st_mod_time);
+                printf("%s  %9u    ", dir_meta->fileType=='D'?"D":"-", dir_meta->file_size);
             printf("%s", dir_meta->d_name);
             printf("\n");
         }
@@ -1060,6 +1060,8 @@ fdDir * fs_opendir(const char *name) {
         dir_stream->inode = inode_of_dir;
         fdDir * entry = dir_table;
         for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, entry++) {
+        	if (entry->is_used != 1)
+        		continue;
             if (entry->parent_inode  == 0) {
                 dir_stream->inode =  entry->inode;
                 dir_stream->parent_inode = entry->parent_inode;
@@ -1073,6 +1075,8 @@ fdDir * fs_opendir(const char *name) {
         fdDir * entry = dir_table;
         for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, entry++) {
             if (entry->inode == inode_of_dir) {
+            	if (entry->is_used != 1)
+        		continue;
                 dir_stream->inode =  entry->inode;
                 dir_stream->parent_inode = entry->parent_inode;
                 dir_stream->is_used = 1;
