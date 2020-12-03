@@ -36,6 +36,8 @@ void dir_rm_helper (int inode_to_remove);
 #define DEF_PATH_SIZE 128
 #define DEF_DIR_TABLE_SIZE 10
 
+#define DEBUG_MODE 0
+
 Bitvector * bitmap;
 fs_stack * cwd_stack; /* A stack that contains inode ints */
 fdDir * dir_table; /* An array of directories */
@@ -125,7 +127,8 @@ int dir_offload_configs() {
 void dir_table_expand() {
 	num_table_expansions++;
 	dir_table = realloc(dir_table, sizeof(fdDir) * DEF_DIR_TABLE_SIZE * num_table_expansions);
-	printf("%s Expanded directory table. New size: %d\n", PREFIX, DEF_DIR_TABLE_SIZE * num_table_expansions);
+	if (DEBUG_MODE)
+	    printf("%s Expanded directory table. New size: %d\n", PREFIX, DEF_DIR_TABLE_SIZE * num_table_expansions);
 }
 
 int dir_move(fdDir * dirp, char * destination_directory) {
@@ -177,7 +180,8 @@ int dir_move(fdDir * dirp, char * destination_directory) {
 int fs_mkdir(char *pathname, mode_t mode) {
 
 	if (!is_initialized) {
-		printf("%s mkdir: error. (Cause: directory maanger is not initialized)\n", PREFIX);
+        if (DEBUG_MODE)
+		    printf("%s mkdir: error. (Cause: directory manager is not initialized)\n", PREFIX);
 		return -1;
 	}
 	
@@ -226,7 +230,8 @@ int fs_mkdir(char *pathname, mode_t mode) {
 				}
 			}
 			if (!is_found) {
-				printf("%s mkdir error: invalid path component \'%s\'.\n", PREFIX, dir_name);
+                if (DEBUG_MODE)
+				    printf("%s mkdir error: invalid path component \'%s\'.\n", PREFIX, dir_name);
 				return -1;
 			}
 			f_slash_counter--;
@@ -264,21 +269,24 @@ int fs_mkdir(char *pathname, mode_t mode) {
 			LBAwrite(meta_write_buffer, 1, free_blocks[0]);
                 	
 			free(meta_write_buffer);
-			
-			printf("%s mkdir: New directory created: %s\n", PREFIX, dir_name);
+
+            if (DEBUG_MODE)
+			    printf("%s mkdir: New directory created: %s\n", PREFIX, dir_name);
 			return 1;
 		}
 		dir_name = strtok_r(NULL, "/", &saveptr);
 	
 	}
-	printf("%s mkdir error: undefined.\n", PREFIX);
+    if (DEBUG_MODE)
+	    printf("%s mkdir error: undefined.\n", PREFIX);
 	return -1;
 }
 
 int fs_mkfile(char *pathname, int block_len) {
 
 	if (!is_initialized) {
-		printf("%s mkdir: error. (Cause: directory maanger is not initialized)\n", PREFIX);
+        if (DEBUG_MODE)
+		    printf("%s mkdir: error. (Cause: directory maanger is not initialized)\n", PREFIX);
 		return -1;
 	}
 	
@@ -327,7 +335,8 @@ int fs_mkfile(char *pathname, int block_len) {
 				}
 			}
 			if (!is_found) {
-				printf("%s mkdir error: invalid path component \'%s\'.\n", PREFIX, dir_name);
+                if (DEBUG_MODE)
+				    printf("%s mkdir error: invalid path component \'%s\'.\n", PREFIX, dir_name);
 				return -1;
 			}
 			f_slash_counter--;
@@ -365,21 +374,24 @@ int fs_mkfile(char *pathname, int block_len) {
 			LBAwrite(meta_write_buffer, 1, free_blocks[0]);
                 	
 			free(meta_write_buffer);
-			
-			printf("%s new file created: %s\n", PREFIX, dir_name);
+
+            if (DEBUG_MODE)
+			    printf("%s new file created: %s\n", PREFIX, dir_name);
 			return 0;
 		}
 		dir_name = strtok_r(NULL, "/", &saveptr);
 	
 	}
-	printf("%s mkdir error: undefined.\n", PREFIX);
+    if (DEBUG_MODE)
+	    printf("%s mkdir error: undefined.\n", PREFIX);
 	return -1;
 }
 
 char * fs_getcwd(char *buf, size_t size) {
 
 	if (!is_initialized) {
-		printf("%s mkdir: error. (Cause: directory maanger is not initialized)\n", PREFIX);
+        if (DEBUG_MODE)
+		    printf("%s mkdir: error. (Cause: directory maanger is not initialized)\n", PREFIX);
 		return NULL;
 	}
 	
@@ -477,7 +489,8 @@ int fs_rmdir(char *pathname) {
 				}
 			}
 			if (!is_found) {
-				printf("%s rmdir error: invalid path component \'%s\'.\n", PREFIX, dir_name);
+                if (DEBUG_MODE)
+				    printf("%s rmdir error: invalid path component \'%s\'.\n", PREFIX, dir_name);
 				return -1;
 			}
 			f_slash_counter--;
@@ -496,7 +509,8 @@ void dir_rm_helper(int inode_to_remove) {
 	
 	for (int i = 0; i < num_table_expansions * DEF_DIR_TABLE_SIZE; i++, dir_ptr++) {
 		if (dir_ptr->parent_inode == inode_to_remove) {
-			printf("Removing %d\n", dir_ptr->inode);
+            if (DEBUG_MODE)
+			    printf("Removing %d\n", dir_ptr->inode);
 			// overwrite the metadata block of dir
 			dir_rm_helper(dir_ptr->inode);
 		}
@@ -517,7 +531,8 @@ void dir_rm_helper(int inode_to_remove) {
 int fs_setcwd(char *path) {
 
 	if (!is_initialized) {
-		printf("%s mkdir: error. (Cause: directory maanger is not initialized)\n", PREFIX);
+        if (DEBUG_MODE)
+		    printf("%s mkdir: error. (Cause: directory manager is not initialized)\n", PREFIX);
 		return -1;
 	}
 	
@@ -559,7 +574,8 @@ int fs_setcwd(char *path) {
         	}
 
 		if (is_found == 0) {
-			printf("%s setcwd: Error. \'%s\' was not found. (Cause: It is not a valid directory type, or it is not in path.)\n", PREFIX, dir_name);
+            if (DEBUG_MODE)
+			    printf("%s setcwd: Error. \'%s\' was not found. (Cause: It is not a valid directory type, or it is not in path.)\n", PREFIX, dir_name);
 
             		// undo directory pushes to cwd_stacks
             		while (stack_push_count > 0 && stack_size(cwd_stack) > 0)
@@ -573,7 +589,8 @@ int fs_setcwd(char *path) {
 	char * buf = malloc(256);
 
 	fs_getcwd(buf, 256);
-	printf("%s setcwd: Successful change directory to %s.\n", PREFIX, buf);
+    if (DEBUG_MODE)
+	    printf("%s setcwd: Successful change directory to %s.\n", PREFIX, buf);
 	free(buf);
 	return 0;
 }
@@ -775,7 +792,8 @@ void dir_printShort(char * pathname,  int fllong, int  flall) {
                 }
         }
         if (is_found == 0) {
-            printf("%s ls error: invalid path %s\n", PREFIX, dir_name);
+            if (DEBUG_MODE)
+                printf("%s ls error: invalid path %s\n", PREFIX, dir_name);
             return;
         }
         dir_name = strtok_r(NULL, "/", &saveptr);
