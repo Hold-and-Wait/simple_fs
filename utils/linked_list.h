@@ -24,9 +24,11 @@ extern Node *head;
 
 void addNode(Node **head, sector_info val);
 void deleteList(Node **head);
-int returnSectorSize();
+int get_list_size();
 int nodeCounter();
 Node* getNthNode(Node* head, int index);
-
+Node* removeLastNode(Node* head);
+long get_file_size(Node *head);
+int get_list_size(Node *head);
 void printList(Node *head);
 #endif /* LINKEDLIST_LINKED_LIST_H_ */
