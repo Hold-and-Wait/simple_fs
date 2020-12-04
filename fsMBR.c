@@ -153,7 +153,7 @@ int beginFSInit(char * filename, uint64_t * volSize, uint64_t * blockSize, Super
 		printf("Error: you did not create the volume");
 		return -1;
 	}
-
+    return 0;
  }
 
 void initializeBitmapVector(uint64_t * volumeSize, uint64_t *blocksize, Bitvector *bitmap_vec){
