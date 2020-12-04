@@ -66,7 +66,6 @@ int main (int argc, char *argv[]){
 		return -1;
 	}
 	printf("\n-> TEST[01] ORIGINAL FILE [ %d ] PRINTS OUT SEGMENTS OF 512 BYTES : fd = %s \n\n", fd, file01);
-	//printf("\n\n\n: TEST[02] INSERTS STRING TO THE BEGINNING OF FILE in mode 0: PRINTS OUT SEGMENTS OF 512 BYTES :\n");
 	do {
 		read_bytes = b_read (fd, buffer, 512);//b_read (3, (char * buffer = malloc(80), 80);
 		buffer[read_bytes] = '\0';
