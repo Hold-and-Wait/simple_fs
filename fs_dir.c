@@ -35,7 +35,7 @@ void dir_rm_helper (int inode_to_remove);
 #define DEF_PATH_SIZE 128
 #define DEF_DIR_TABLE_SIZE 10
 
-#define DEBUG_MODE 0 // Set to 1 to enable directory debugging printfs
+#define DEBUG_MODE 1 // Set to 1 to enable directory debugging printfs
 
 Bitvector * bitmap;
 fs_stack * cwd_stack; /* A stack that contains inode ints */
@@ -238,8 +238,7 @@ int dir_move(char * src_directory, char * destination_directory) {
 
 
     if (destination_directory[0] == '/') {
-        if (strlen(destination_directory) == 1)
-            return -1;
+
         stack_path_temp2 = stack_create(DEF_PATH_SIZE);
         stack_push(0, stack_path_temp2);
     } else
