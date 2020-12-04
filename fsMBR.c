@@ -67,17 +67,69 @@ int initSuperBlock(char * filename, uint64_t * volSize, uint64_t * blockSize, st
 	sbPtr->TIME_ACCESSED = malloc((*blockSize)/4); // takes 32 bytes
 	getDate(sbPtr->DATE_ACCESSED);
 	getTime(sbPtr->TIME_ACCESSED);
+
+
+
+
+
+ //Initializes bitmap vector
+ //RIGHT HERE WRITE TO LBA ZERO FOR THE STRUCT DATA FROM SUPERBLOCK
+	char* temp_buf = malloc(*blockSize);
+	
+	char strArr1[100] = "Start Block Of SuperBlock = ";
+	strcpy(temp_buf, strArr1);
+	char resArr[100];
+	int num = sbPtr->MBR_LOCATION_IN_VOL;
+	sprintf(resArr, "%d", num);
+	strcat(temp_buf, resArr);
+	
+	char strArr2[100] = "\nStart Block of Free Space Manager = ";
+	strcat(temp_buf, strArr2);
+	num = sbPtr->startBlockOfFreeSpace;
+	sprintf(resArr, "%d", num);
+	strcat(temp_buf, resArr);
+	
+	char strArr3[100] = "\nAvaible Blocks in Volume = ";
+	strcat(temp_buf, strArr3);
+	num = sbPtr->AVAILABLE_BLOCKS;
+	sprintf(resArr, "%d", num);
+	strcat(temp_buf, resArr);
+	
+	char strArr4[100] = "\nVolume Size in Sectors = ";
+	strcat(temp_buf, strArr4);
+	num = sbPtr->VOL_SIZE_IN_BYTES;
+	sprintf(resArr, "%d", num);
+	strcat(temp_buf, resArr);
+
+	char strArr5[100] = "\nVolume Size in Sectors = ";
+	strcat(temp_buf, strArr5);
+	num = sbPtr->VOL_SIZE_IN_SECTORS;
+	sprintf(resArr, "%d", num);
+	strcat(temp_buf, resArr);
+	
+	char strArr6[100] = "\nBlock Size = ";
+	strcat(temp_buf, strArr6);
+	num = sbPtr->blockSize;
+	sprintf(resArr, "%d", num);
+	strcat(temp_buf, resArr);
+	
+	char strArr7[100] = "\nLast Date Accesssed = ";
+	strcat(temp_buf, strArr7);
+	strcpy(resArr, sbPtr->DATE_ACCESSED);
+	strcat(temp_buf, resArr);
+	
+	char strArr8[100] = "\nLast Time Accessed = ";
+	strcat(temp_buf, strArr8);
+	strcpy(resArr, sbPtr->TIME_ACCESSED);
+	strcat(temp_buf, resArr);
+	
+	LBAwrite (temp_buf, 2, 2);  		// Writes Bitmap-vector meta-data to LBA[2]
+	
 	return startVal;
 }
-
-
-
-/*
- * Initializes bitmap vector
- * Writes bytes to hard drive
- *
- */
-
+	
+	
+	
 void initializeBitmapVecotr(uint64_t * volumeSize, uint64_t *blocksize, Bitvector *bitmap_vec){
 	int blockSize = *blocksize;
 	int volSize = *volumeSize;
@@ -131,9 +183,4 @@ void initializeBitmapVecotr(uint64_t * volumeSize, uint64_t *blocksize, Bitvecto
 
 }
 
-
-//LBAread(mbrPtr, 1, 0); //this is checking if its already initialized
-void testMBRFunction() {
-	printf("MBR Test\n");
-}
 
