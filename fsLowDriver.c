@@ -51,8 +51,8 @@ int main (int argc, char *argv[]){
 	bitmap_vec = create_bitvec(volumeSize, blockSize);		// Initializing bitmap vector
 	int retVal =  initSuperBlock(filename, &volumeSize, &blockSize, sbPtr, bitmap_vec); 	// Mounts volume and formats File System
 
-	// WHEN YOU FIRST CALL THIS PROGRAM, REMOVE THE COMMENT CHARS OF THE FOLLOWING LINE, write_this_to_buffer(). Once you call it, comment it out
-      //write_this_to_buffer();
+		// CALL "write_this_to_buffer();" WHEN FILE SYSTEM IS MOUNTED FOR THE VERY FIRST TIME, then add a comment
+	//write_this_to_buffer();
 
 		printf("\nLBA[0T0]: retVal: %d\n\n\n\n", retVal);
 
