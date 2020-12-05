@@ -835,10 +835,9 @@ void b_close (int file_d){
 	struct fs_diriteminfo * updated_meta = fs_readdir(directory);
 	updated_meta->file_size += open_files_stack[file_d].file_size; // increment file size
 	/*
-	 * If file LBA location or # blocks occupied needs to  be modified, use  this:
+	 * If updated # blocks the file takes up, use:
 	 * updated_meta->d_reclen = NEW BLOCK LENGTH
-	 * directory->directoryStartLocation = NEW START LOCATION
-	 * ** MAKE SURE TO NOTIFY BITMAP (FREE OLD BLOCKS AND ALLOCATE NEW BLOCKS)
+	 * ** dir_modify_data will automatically handle call on bitmap **
 	 */
 	dir_modify_meta(directory, updated_meta);
 

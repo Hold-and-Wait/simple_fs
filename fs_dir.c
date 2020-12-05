@@ -1294,6 +1294,20 @@ int fs_delete(char * filename) {
 void dir_modify_meta(fdDir * dir, struct fs_diriteminfo * updated_meta) {
     char * meta_write_buffer = malloc(513);
     struct fs_diriteminfo * current_meta = fs_readdir(dir);
+    
+    // update meta
+	if (current_meta->d_reclen != updated_meta->d_reclen) {
+		// free old blocks
+		for (int i = dir->directoryStartLocation; i < dir->directoryStartLocation + current_meta->d_reclen; i++)
+			set_bit(bitmap, i, 0);
+			
+		// allocate new blocks
+		int fb_array[updated_meta->d_reclen];
+		int * free_blocks = get_free_blocks_index(bitmap, fb_array, updated_meta->d_reclen);
+		dir->directoryStartLocation = free_blocks[0];
+		for (int i = 0; i < updated_meta->d_reclen; ++i)
+		    set_bit(bitmap, free_blocks[i], 1);
+	}
 
     // update lba location, if needed
     fdDir * tableptr = dir_table;
