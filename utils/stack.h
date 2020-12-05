@@ -1,26 +1,26 @@
+/**************************************************************
+* Class:  CSC-415
+* Name: Mark Jovero
+* Student ID:   916691664
+* Project: Basic File System
+*
+* File: stack.c
+*
+* Description: A stack implementation
+*
+**************************************************************/
 
-
-struct stack_util create_stack();
-void test_test();
-
-struct stack_util create_stack(int size);
-struct stack_util stack_copy(struct stack_util * dest, struct stack_util * src);
-
-
-void expand_stack(int size, struct stack_util * stack);
-void stack_push(int content, struct stack_util * stack);
-void rm_stack();
-int empty_stack(struct stack_util * stack);
-int stack_pop(struct stack_util * stack);
-int stack_peek(struct stack_util * stack);
-int stack_size(struct stack_util * stack);
-
-struct stack_util {
+typedef struct {
     int capacity;
     int current_size;
-    struct stack_contents * contents;
-};
+    int * content;
+} fs_stack;
 
-struct stack_contents {
-    int data;
-};
+
+fs_stack * stack_create(int size);
+fs_stack * stack_copy(fs_stack * src);
+
+int stack_push(int content, fs_stack * stack);
+int stack_pop(fs_stack * stack);
+int stack_peek(fs_stack * stack);
+int stack_size(fs_stack * stack);

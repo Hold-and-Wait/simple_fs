@@ -35,7 +35,7 @@
 
 #
 ## UNCOMMENT BELOW TO TEST DIRECTORY ENTRY
-ROOTNAME=fsLowDriver
+ROOTNAME=fsshell
 HW=
 FOPTION=
 RUNOPTIONS=SampleVolume 10000000 512
@@ -43,7 +43,7 @@ CC=gcc
 CFLAGS= -g -I.
 LIBS =pthread
 DEPS =
-ADDOBJ= fsLow.o bitmap_vector.o date.o fsMBR.o utils/stack.o LBA/DirectoryEntries.o b_io.o
+ADDOBJ= fs_dir.o utils/stack.o fsshell.o fsLow.o fsMBR.o bitmap_vector.o utils/date.o utils/linked_list.o b_io.o
 OBJ = $(ROOTNAME)$(HW)$(FOPTION).o $(ADDOBJ)
 
 %.o: %.c $(DEPS)
@@ -55,33 +55,9 @@ $(ROOTNAME)$(HW)$(FOPTION): $(OBJ)
 clean:
 	rm *.o $(ROOTNAME)$(HW)$(FOPTION)
 	rm utils/stack.o
-	rm LBA/DirectoryEntries.o
+	rm utils/linked_list.o
+	rm utils/date.o
 
 run: $(ROOTNAME)$(HW)$(FOPTION)
 	./$(ROOTNAME)$(HW)$(FOPTION) $(RUNOPTIONS)
 
-
-## COMMENT THIS PORTION OUT
-# DEFAULTS:
-#ROOTNAME=fsLowDriver
-#HW=
-#FOPTION=
-#RUNOPTIONS=SampleVolume 10000000 512
-#CC=gcc
-#CFLAGS= -g -I.
-#LIBS =pthread
-#DEPS =
-#ADDOBJ= fsLow.o
-#OBJ = $(ROOTNAME)$(HW)$(FOPTION).o $(ADDOBJ)
-
-#%.o: %.c $(DEPS)
-#	$(CC) -c -o $@ $< $(CFLAGS)
-
-#$(ROOTNAME)$(HW)$(FOPTION): $(OBJ)
-#	$(CC) -o $@ $^ $(CFLAGS) -lm -l readline -l $(LIBS)
-
-#clean:
-#	rm *.o $(ROOTNAME)$(HW)$(FOPTION)
-
-#run: $(ROOTNAME)$(HW)$(FOPTION)
-#	./$(ROOTNAME)$(HW)$(FOPTION) $(RUNOPTIONS)
