@@ -831,10 +831,16 @@ int b_seek(int file_d, signed int selector, int mode){ // mode: 0 = beginning of
 void b_close (int file_d){
 
 
-		// TO-do: we need a function that updates file's metadata when ever changes happened to that file.
-        
-
-
+	fdDir * directory = fs_opendir(open_files_stack[file_d].file_name);
+	struct fs_diriteminfo * updated_meta = fs_readdir(directory);
+	updated_meta->file_size += open_files_stack[file_d].file_size; // increment file size
+	/*
+	 * If file LBA location or # blocks occupied needs to  be modified, use  this:
+	 * updated_meta->d_reclen = NEW BLOCK LENGTH
+	 * directory->directoryStartLocation = NEW START LOCATION
+	 * ** MAKE SURE TO NOTIFY BITMAP (FREE OLD BLOCKS AND ALLOCATE NEW BLOCKS)
+	 */
+	dir_modify_meta(directory, updated_meta);
 
 
 

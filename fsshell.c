@@ -775,13 +775,6 @@ int main (int argc, char * argv[])
     //retVal = initSuperBlock(filename, &volumeSize, &blockSize);
 	beginFSInit(filename, &volumeSize, &blockSize, sbPtr, bitmap_vec);
 
-/*	** HOW TO UPDATE META OF FILE **
-	fs_mkfile("text5.txt", 10);
-	fdDir * dir_of_file = fs_opendir("text5.txt");
-	struct fs_diriteminfo * meta = fs_readdir(dir_of_file);
-	meta->file_size = 512;
-	dir_modify_meta(dir_of_file, meta);
-*/
     // open/create a file
     int fd = b_open("test_file.txt", 3);
 
