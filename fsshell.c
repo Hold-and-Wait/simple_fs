@@ -775,19 +775,6 @@ int main (int argc, char * argv[])
     //retVal = initSuperBlock(filename, &volumeSize, &blockSize);
 	beginFSInit(filename, &volumeSize, &blockSize, sbPtr, bitmap_vec);
 
-    // open/create a file
-    int fd = b_open("test_file.txt", 3);
-
-    char * buf_write = malloc(512);
-    strcpy(buf_write, "A TEST WRITE!");
-    b_write(fd, buf_write, 512);
-    b_close(fd);
-
-    // Read
-    fd = b_open("test_file.txt", 3);
-    char * buf_read = malloc(512);
-    b_read(fd, buf_read, 512);
-    printf("BUF_READ: %s\n", buf_read);
 	while (1)
 		{
 		cmdin = readline("Prompt > ");

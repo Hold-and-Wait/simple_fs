@@ -28,7 +28,7 @@
 #include "bitmap_vector.h"
 #include "fsMBR.h"
 #include "b_io.h"
-#include "lba.h"
+#include "mfs.h"
 #include "utils/date.h"
 #include "utils/linked_list.h"
 char * delimeter = "\"\'“”‘’?:;-,—*($%)![]#/ \t\n\x0A\r";
@@ -224,6 +224,8 @@ TIME: 12:30:44
  */
 void b_close (int file_d){
 
+    fdDir * directory = fs_opendir(open_files_stack[file_d].file_name);
+    struct fs_diriteminfo * meta = fs_readdir(directory);
 
 	if(open_files_stack[file_d]._FLAG_ == 0 ){ // 0 for reading
 		open_files_stack[file_d].file_descriptor = -1;
@@ -233,32 +235,24 @@ void b_close (int file_d){
 		if(LOC_STRG_BUFF_WR != NULL && (int)strlen(LOC_STRG_BUFF_WR) > 0)
 			load_to_node_list(file_d);
 
+        load_to_node_list(file_d);
 
 
-		// Data is been transfered to LBA
+        // Data is been transfered to LBA
 		int get_nodes_qty = get_list_size(open_files_stack[file_d].file_data);
 		for (int var = 0; var < get_nodes_qty; ++var) {
 			Node *temp = getNthNode(open_files_stack[file_d].file_data, var);
-			//	LBAwrite(temp->data.buff_sector, 1, 100 + var);        // <======================== WE need the exact location
+			LBAwrite(temp->data.buff_sector, 1, directory->directoryStartLocation+1 + var);        // <======================== WE need the exact location
 			printf("\n::: %s \n", temp->data.buff_sector);
 
 
 		}
 
 
-
-		// Update meta-data in Directory
-		/*
-				open_files_stack[file_d]._FLAG_;
-				open_files_stack[file_d].file_name;
-				get_list_size(open_files_stack[file_d].file_data); // FILE BLOCKS LENGTH
-				get_file_size(open_files_stack[file_d].file_data); // FILE SIZE (BYTES)
-				open_files_stack[file_d].location = barray[0];     // LOCATION IN LBA (STARTING POSITION)
-				// TOTAL BLOCKS USED BY THIS FILE: get_list_size(open_files_stack[file_d].file_data) + 1;
-				fdDir * directory = fs_opendir(open_files_stack[file_d].file_name);
-				struct fs_diriteminfo * updated_meta = fs_readdir(directory);
-				updated_meta->file_size += open_files_stack[file_d].file_size; // increment file size
-		 */
+		// TOTAL BLOCKS USED BY THIS FILE: get_list_size(open_files_stack[file_d].file_data) + 1;
+		fdDir * directory = fs_opendir(open_files_stack[file_d].file_name);
+		struct fs_diriteminfo * updated_meta = fs_readdir(directory);
+		updated_meta->file_size += open_files_stack[file_d].file_size; // increment file size
 
 
 		/*
@@ -270,7 +264,7 @@ void b_close (int file_d){
 		 */
 
 
-		//	dir_modify_meta(directory, updated_meta);
+		dir_modify_meta(directory, updated_meta);
 
 
 
@@ -300,8 +294,8 @@ void b_close (int file_d){
 	reset_read_io_vars();
 	open_files_stack[file_d].sector_tracker = 0;
 	open_files_stack[file_d].file_selector = 0;
-	free(sector_var_x.buff_sector);
-	sector_var_x.buff_sector = NULL;
+	//free(sector_var_x.buff_sector); --> error
+	//sector_var_x.buff_sector = NULL; --> error
 	open_files_stack[file_d].file_descriptor = -1;
 	if(open_files_stack[file_d].file_data != NULL)
 		deleteList(&open_files_stack[file_d].file_data);
