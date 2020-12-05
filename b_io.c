@@ -151,7 +151,7 @@ TIME: 12:30:44
     open_files_stack[temp_loc_fd].sectors_qty = meta->d_reclen;
     open_files_stack[temp_loc_fd].file_name = meta->d_name;
 
-    //************ IF file EXISTS ****************************
+    //>>>************ IF file EXISTS ****************************
 	char*iNode = malloc(B_CHUNK_SIZE/4);
 	//open_files_stack[temp_loc_fd].
 	/*
@@ -186,7 +186,7 @@ TIME: 12:30:44
 		}
 		token = strtok(NULL, delimeter);
 		word_counter++;
-	}//************ IF file EXISTS **************************
+	}//>>>************ IF file EXISTS **************************
 */
 
 

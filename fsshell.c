@@ -356,7 +356,7 @@ int cmd_cp (int argcnt, char *argvec[])
 	b_close (testfs_dest_fd);
 	return 0;
 #endif
-	}
+}
 	
 /****************************************************
 *  Move file commmand
