@@ -290,6 +290,14 @@ int dir_move(char * src_directory, char * destination_directory) {
         dir_name = strtok_r(NULL, "/", &saveptr2);
     }
 
+    struct fs_diriteminfo * dest_meta = fs_readdir(destination);
+        if (dest_meta->fileType != 'D') {
+    	    if (DEBUG_MODE)
+                printf("%s mv error: dest %s is invalid.\n", PREFIX, dir_name);
+             return -2;
+    }
+
+
     //mv
     char * meta_write_buffer = malloc(513);
     struct fs_diriteminfo * current_meta = fs_readdir(src);
