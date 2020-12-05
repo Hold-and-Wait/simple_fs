@@ -346,14 +346,14 @@ int read_long_bytes(b_io_fd f_descriptor, char * buffer, int requested_bytes){
  */
 int b_read (b_io_fd file_d, char * buffer, int requested_bytes){
 	int routine_return_val = 0;
-	memset(buffer,0 , strlen(buffer));
+	/*memset(buffer,0 , strlen(buffer));
 	if(add_leftover_to_list_node == -1){
 		load_to_node_list(file_d);
 		reset_write_io_vars();
 
-	}
+	}*/
 	if(END_OF_READ_FILE == -1){ // <-- No more bytes left to read from current open FILE
-		add_leftover_to_list_node = -1;
+		//add_leftover_to_list_node = -1;
 		reset_read_io_vars();
 		return 0;
 	}
