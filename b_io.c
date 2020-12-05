@@ -243,16 +243,14 @@ void b_close (int file_d){
 		for (int var = 0; var < get_nodes_qty; ++var) {
 			Node *temp = getNthNode(open_files_stack[file_d].file_data, var);
 			LBAwrite(temp->data.buff_sector, 1, directory->directoryStartLocation+1 + var);        // <======================== WE need the exact location
-			printf("\n::: %s \n", temp->data.buff_sector);
-
-
+			//printf("\n::: %s \n", temp->data.buff_sector);
 		}
 
 
 		// TOTAL BLOCKS USED BY THIS FILE: get_list_size(open_files_stack[file_d].file_data) + 1;
-		fdDir * directory = fs_opendir(open_files_stack[file_d].file_name);
-		struct fs_diriteminfo * updated_meta = fs_readdir(directory);
-		updated_meta->file_size += open_files_stack[file_d].file_size; // increment file size
+		//fdDir * directory = fs_opendir(open_files_stack[file_d].file_name);
+		//struct fs_diriteminfo * updated_meta = fs_readdir(directory);
+		//updated_meta->file_size += open_files_stack[file_d].file_size; // increment file size
 
 
 		/*
@@ -264,7 +262,7 @@ void b_close (int file_d){
 		 */
 
 
-		dir_modify_meta(directory, updated_meta);
+		//dir_modify_meta(directory, updated_meta);
 
 
 
