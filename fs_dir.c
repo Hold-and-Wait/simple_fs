@@ -19,7 +19,7 @@
 #include "utils/stack.h"
 #include "mfs.h"
 #include "bitmap_vector.h"
-#include "date.h"
+#include "utils/date.h"
 
 //
 void dir_table_expand();
@@ -1049,6 +1049,9 @@ fdDir * fs_opendir(const char *name) {
         if (inode_of_dir == -1)
             inode_of_dir = fs_isFile(name_c);
     }
+
+    if (inode_of_dir == -1)
+        return NULL;
 
 
 

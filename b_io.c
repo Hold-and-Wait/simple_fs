@@ -29,7 +29,7 @@
 #include "bitmap_vector.h"
 #include "fsMBR.h"
 #include "b_io.h"
-#include "lba.h"
+#include "mfs.h"
 #include "utils/date.h"
 #include "utils/linked_list.h"
 char * delimeter = "\"\'“”‘’?:;-,—*($%)![]#/ \t\n\x0A\r";
@@ -159,29 +159,6 @@ void start_up (){
  */
 int b_open (char *filename, int flags) {
 
-	/*	// check if filename exists and it is of type DT_REG (a file)
-	fdDir * directory = fs_opendir(filename);
-
-	if (directory == NULL) { // == NULL means the file either: does not exist OR file is not a text file
-
-		// check for flag to create a file
-		if (flags == (O_CREAT | O_WRONLY) ||
-				(flags == (O_CREAT | O_RDONLY)) ||
-				(flags == (O_CREAT | O_RDWR)) ||
-				(flags == O_CREAT)) {
-
-			fs_mkdir(filename, flags, DT_REG);
-			directory = fs_opendir(filename);
-
-
-		} else { // if no O_CREAT flag, and file does not exist, ERROR
-			return -1;
-		}
-	}
-
-
-	 */
-
 
 	//************ INITIALIZE STACK & PROVIDE FILE DESCRIPTOR************************
 	int temp_loc_fd = 0;
@@ -222,10 +199,27 @@ TIME: 12:30:44
 
     */
 
+    // Notify directory
+    fdDir * directory = fs_opendir(filename);
+    if (directory == NULL) { // File does not exist, create a new directory entry
 
+        fs_mkfile(filename, 100); // a file that takes up 100 blocks
+        directory = fs_opendir(filename);
 
-	//************ IF file EXISTS ****************************
+    }
+
+    struct fs_diriteminfo * meta = fs_readdir(directory);
+
+    open_files_stack[temp_loc_fd].location = directory->directoryStartLocation;
+    open_files_stack[temp_loc_fd].file_size = meta->file_size;
+    open_files_stack[temp_loc_fd]._FLAG_ = 3;
+    open_files_stack[temp_loc_fd].sectors_qty = meta->d_reclen;
+    open_files_stack[temp_loc_fd].file_name = meta->d_name;
+
+    //************ IF file EXISTS ****************************
 	char*iNode = malloc(B_CHUNK_SIZE/4);
+	//open_files_stack[temp_loc_fd].
+	/*
 	LBAread(iNode, 1, 100);
 	printf("\n\n**LBA 100\n %s\n", iNode);
 	//Parse FILE meta-data
@@ -258,7 +252,7 @@ TIME: 12:30:44
 		token = strtok(NULL, delimeter);
 		word_counter++;
 	}//************ IF file EXISTS **************************
-
+*/
 
 
 	//************ LOAD DATA FROM LBA TO A NODE LIST **********************************
@@ -848,7 +842,7 @@ void b_close (int file_d){
 		open_files_stack[file_d].file_descriptor = -1;
 		reset_read_io_vars(file_d);
 		printf("reset_read_io_vars( %d ) successfully closed \n\n", file_d);
-	} else if (open_files_stack[file_d]._FLAG_ == 1){
+	} else if (open_files_stack[file_d]._FLAG_ == 1) {
 
 		if(add_leftover_to_list_node == 0){
 			/*			int malloc_size = (int)strlen(LOC_BUFFER_WRITE)+1;

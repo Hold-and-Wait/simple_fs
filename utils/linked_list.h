@@ -16,7 +16,7 @@
 #include <stdlib.h>
 #include "../b_io.h"
 
-typedef struct Node{
+typedef struct Node {
 	struct Node * next;
 	sector_info data;
 } Node;

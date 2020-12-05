@@ -782,8 +782,18 @@ int main (int argc, char * argv[])
 	meta->file_size = 512;
 	dir_modify_meta(dir_of_file, meta);
 */
+    // open/create a file
+    int fd = b_open("test_file.txt", 3);
 
+    char * buf_write = malloc(512);
+    strcpy(buf_write, "A TEST WRITE!");
+    b_write(fd, buf_write, 512);
 
+    // Read
+    char * buf_read = malloc(512);
+    b_read(fd, buf_read, 512);
+    b_close(fd);
+    printf("BUF_READ: %s\n", buf_read);
 	while (1)
 		{
 		cmdin = readline("Prompt > ");
