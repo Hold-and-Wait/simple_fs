@@ -75,7 +75,7 @@ int read_long_bytes(b_io_fd f_descriptor, char * buffer, int requested_bytes);
 int write_long_bytes(int file_d, char *caller_bfr, int bytes_to_write);
 int reload_buffer(b_io_fd f_descriptor);
 void start_up ();
-void load_vitmap_vector();
+void load_bitmap_vector();
 int reset_seek_io_vars();
 int reset_read_io_vars(b_io_fd f_descriptor);
 int reset_write_io_vars(b_io_fd f_descriptor);
@@ -93,37 +93,37 @@ int caller_bffrs_CURSOR = 0, WRT_THIS_TO_buffer = 0,  LOCAL_BUF_CURSOR = 0;
 /*
  * Load storage manager
  */
-void load_vitmap_vector(){
+void load_bitmap_vector(){
 	//************ LOAD SORAGE MANAGER ****************************
-	char*iNode_vector = malloc(B_CHUNK_SIZE);
+	char *iNode_vector = malloc(B_CHUNK_SIZE);
 	iNode_vector[B_CHUNK_SIZE] = '\0';
 	LBAread(iNode_vector, 1, 2);
-
-	//printf("\n\n**LBA [2]\n %s\n", iNode_vector);
+	//	printf("\n\n**LBA [2]\n %s\n", iNode_vector);
 	//Parse FILE meta-data
 	int word_counter = 0;
 	char *token;
 	token = strtok(iNode_vector, delimeter);
 	int i = 0;
+	int tempVecSize = 0;
+	int bit_mapLoc = 0;
 	while (token != NULL) {
 		if(word_counter == 1){ // iNode location in LBA
-			bitmap_vec_io->LOCATION_ID = atoi(token);;
+			bit_mapLoc = atoi(token);;
 			//printf("\n\n** ndex = %d, bitmap_vec->LOCATION_ID  [%d]\n", var, bitmap_vec->LOCATION_ID);
 
 		}
 		if(word_counter == 4){ // FILE SIZE : TOTAL SPACE
-			bitmap_vec_io->size = atoi(token);
-			//printf("\n\n** ndex = %d,  bitmap_vec->size  [%d]\n", var, bitmap_vec->size );
-		}
-		if(word_counter == 6){ // FILE FLAG
-			bitmap_vec_io->avalible_blocks = atoi(token);;
-			//printf("\n\n** index = %d,  bitmap_vec->avalible_blocks [%d]\n", var, bitmap_vec->avalible_blocks);
+			tempVecSize = atoi(token);
 			break;
-
+			//printf("\n\n** ndex = %d,  bitmap_vec->size  [%d]\n", var, bitmap_vec->size );
 		}
 		token = strtok(NULL, delimeter);
 		word_counter++;
-	}//************ LOAD BITMAP VECTOR **************************
+	}
+	bitmap_vec_io = create_bitvec(tempVecSize, B_CHUNK_SIZE);
+	bitmap_vec_io->LOCATION_ID = bit_mapLoc;
+
+	//************ LOAD BITMAP VECTOR **************************
 	memset(iNode_vector,0 , strlen(iNode_vector));
 	LBAread(iNode_vector, 1, 3);
 	i = (int)strlen(iNode_vector);
@@ -134,12 +134,17 @@ void load_vitmap_vector(){
 	}
 	for (int var = 0; var < i; ++var) {
 		int x =	get_bit(bitmap_vec_io, var); // 0 - 99 = 1
-	//	printf("Index %d  ::  x = [%d] \n", var, x);
+		printf("Index %d  ::  x = [%d] \n", var, x);
 	}
+
+
 	free(iNode_vector);
 	iNode_vector = NULL;
 
+
 }
+
+
 /*
  *
  */
