@@ -122,17 +122,20 @@ Node* getNthNode(Node* head, int index){
 	if(index < 0 ){
 		return NULL;
 	}
-	Node* current = head;
+	Node* cur_node = head;
 	// the index of the
 	// node we're currently
 	// looking at
 	int count = 0;
-	while (current != NULL) {
+	while (cur_node != NULL) {
 		if (count == index)break;
 		count++;
-		current = current->next;
+		cur_node = cur_node->next;
 	}
-	return current;
+	if(cur_node == NULL) {
+		return NULL;
+	}
+	return cur_node;
 }
 /*
  *
