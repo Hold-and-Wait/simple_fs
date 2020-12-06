@@ -774,6 +774,12 @@ void b_close (int file_d){
 		open_files_stack[file_d].file_descriptor = -1;
 		ACTIVE_FILES--;
 		reset_read_io_vars();
+		open_files_stack[file_d].sector_tracker = 0;
+		open_files_stack[file_d].file_selector = 0;
+		open_files_stack[file_d].file_descriptor = -1;
+		if(open_files_stack[file_d].file_data != NULL)
+			deleteList(&open_files_stack[file_d].file_data);
+		open_files_stack[file_d].file_data = NULL;
 		printf("F0\n");
 	}  else if (open_files_stack[file_d]._FLAG_ == 1){
 		printf("F1\n");
@@ -789,9 +795,7 @@ void b_close (int file_d){
 		int get_nodes_qty = get_list_size(open_files_stack[file_d].file_data);
 		int f_size = 0;
 		printf("NODE QTY IN b_close: %d\n", get_nodes_qty);
-
 		for (int var = 0; var < get_nodes_qty; ++var) {
-
 			Node *temp = getNthNode(open_files_stack[file_d].file_data, var);
 			LBAwrite(temp->data.buff_sector, 1, directory->directoryStartLocation+1 + var);        // <======================== WE need the exact location
 			printf("\n::: %s %d\n", temp->data.buff_sector, temp->data.sector_size);
@@ -801,19 +805,19 @@ void b_close (int file_d){
 		dir_modify_meta(directory, updated_meta);
 		reset_write_io_vars();
 		ACTIVE_FILES--;
-
-	}
-
-
-	if(ACTIVE_FILES == 0){
 		open_files_stack[file_d].sector_tracker = 0;
 		open_files_stack[file_d].file_selector = 0;
-		//free(sector_var_x.buff_sector);
-		sector_var_x.buff_sector = NULL;
 		open_files_stack[file_d].file_descriptor = -1;
 		if(open_files_stack[file_d].file_data != NULL)
 			deleteList(&open_files_stack[file_d].file_data);
 		open_files_stack[file_d].file_data = NULL;
+
+	}
+
+	if(ACTIVE_FILES == 0){
+		free(sector_var_x.buff_sector);
+		sector_var_x.buff_sector = NULL;
+
 	}
 	printf("\n\n ** FILE DESCRIPTOR %d SUCCESSFULLY FREED ** \n\n", file_d);
 	return;
