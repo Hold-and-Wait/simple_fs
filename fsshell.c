@@ -354,6 +354,7 @@ int cmd_cp (int argcnt, char *argvec[])
 		printf("READ %s\n", buf);
 		b_write (testfs_dest_fd, buf, readcnt);
 		} while (readcnt == BUFFERLEN);
+    printf("CLOSE\n");
 	b_close (testfs_src_fd);
 	b_close (testfs_dest_fd);
 	return 0;

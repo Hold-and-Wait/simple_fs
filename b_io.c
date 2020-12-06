@@ -223,7 +223,7 @@ int b_read (b_io_fd file_d, char * buffer, int requested_bytes){
 			printf(MALLOC_ERR_MESS);
 			return -1;
 		}											        // requested bytes = 100
-		LOC_BUFFER_RMNG_BTS = reload_buffer(file_d);    // routine one: READ_BYTES = 512
+        LOC_BUFFER_RMNG_BTS = reload_buffer(file_d);    // routine one: READ_BYTES = 512
 		WRT_THIS_TO_buffer = LOC_BUFFER_RMNG_BTS;
 		ACTVE_OPN_FILE_LOCK = 1;
 	}
@@ -815,7 +815,7 @@ void b_close (int file_d){
 	}
 
 	if(ACTIVE_FILES == 0){
-		free(sector_var_x.buff_sector);
+		//free(sector_var_x.buff_sector);
 		sector_var_x.buff_sector = NULL;
 
 	}
