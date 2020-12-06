@@ -192,10 +192,12 @@ void b_close (int file_d){
 	if(open_files_stack[file_d]._FLAG_ == 0 ){ // 0 for reading
 		open_files_stack[file_d].file_descriptor = -1;
 		reset_read_io_vars();
+        printf("F0\n");
 
-	}  else if (open_files_stack[file_d]._FLAG_ == 1){
 
-	    printf("");
+    }  else if (open_files_stack[file_d]._FLAG_ == 1){
+
+	    printf("F1\n");
 
 		if(LOC_STRG_BUFF_WR != NULL && (int)strlen(LOC_STRG_BUFF_WR) > 0)
 			load_to_node_list(file_d);
@@ -212,15 +214,17 @@ void b_close (int file_d){
 		// Data is been transfered to LBA
 		int get_nodes_qty = get_list_size(open_files_stack[file_d].file_data);
 		int f_size = 0;
-		for (int var = 0; var < get_nodes_qty; ++var) {
+        printf("NODE QTY IN b_close: %d\n", get_nodes_qty);
+
+        for (int var = 0; var < get_nodes_qty; ++var) {
+
 			Node *temp = getNthNode(open_files_stack[file_d].file_data, var);
 			LBAwrite(temp->data.buff_sector, 1, directory->directoryStartLocation+1 + var);        // <======================== WE need the exact location
-			//printf("\n::: %s %d\n", temp->data.buff_sector, temp->data.sector_size);
+			printf("\n::: %s %d\n", temp->data.buff_sector, temp->data.sector_size);
             f_size += temp->data.sector_size;
 		}
         updated_meta->file_size = f_size; // increment file size
         dir_modify_meta(directory, updated_meta);
-
 
 
 		// Update meta-data in Directory

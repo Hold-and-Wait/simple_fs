@@ -120,7 +120,7 @@
 
 /****   SET THESE TO 1 WHEN READY TO TEST THAT COMMAND ****/
 #define CMDLS_ON	1
-#define CMDCP_ON	0
+#define CMDCP_ON	1
 #define CMDMV_ON	1
 #define CMDMD_ON	1
 #define CMDRM_ON	1
@@ -345,11 +345,13 @@ int cmd_cp (int argcnt, char *argvec[])
 		}
 	
 	
-	testfs_src_fd = b_open (src, 1);
+	testfs_src_fd = b_open (src, 0);
 	testfs_dest_fd = b_open (dest, 1);
+	printf("DSF\n");
 	do 
 		{
 		readcnt = b_read (testfs_src_fd, buf, BUFFERLEN);
+		printf("READ %s\n", buf);
 		b_write (testfs_dest_fd, buf, readcnt);
 		} while (readcnt == BUFFERLEN);
 	b_close (testfs_src_fd);
@@ -699,7 +701,6 @@ void processcommand (char * cmd)
 		}
 #endif		
 	cmdv[cmdc] = 0;		//just be safe - null terminate array of arguments
-    printf("DEB\n");
 	for (i = 0; i < dispatchcount; i++)
 		{
 		if (strcmp(dispatchTable[i].command, cmdv[0]) == 0)
@@ -779,7 +780,7 @@ int main (int argc, char * argv[])
 	char * buf_t = malloc(512);
     for (int i = 100; i < 120; i++) {
         LBAread(buf_t, 1, i);
-        printf("\n[LBA %d]\n%s\n", i, buf_t);
+        //printf("\n[LBA %d]\n%s\n", i, buf_t);
     }
 	while (1)
 		{
