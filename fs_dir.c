@@ -1050,8 +1050,6 @@ fdDir * fs_opendir(const char *name) {
             inode_of_dir = fs_isFile(name_c);
     }
 
-    printf("!!! %d\n", inode_of_dir);
-
     if (inode_of_dir == -1)
         return NULL;
 
