@@ -47,7 +47,7 @@ typedef struct file_INFO {
 #define MAX_TABLE_SIZE 20
 
 //************************ Files-Stack ********************************************
-F_INFO open_files_stack [ MAX_TABLE_SIZE ];	// <=== F_INFO  :  Files stack [FILE-01], [FILE-02], [FILE-03], [FILE-04], [FILE-05], [FILE-06], ...[FILE-19] : indexes will act as file descriptor
+F_INFO open_files_stack [ MAX_TABLE_SIZE ];	// <=== F_INFO  : indexes will act as file descriptor
 
 //*********************  variables for writing to a file ***************************
 int LOCAL_STRG_AVL_SPC = 0, LOC_STORAGE_CURSOR = 0, LOCAL_STRG_LNGTH = 0;
@@ -107,8 +107,6 @@ int b_open (char *filename, int flags) {
 		}
 	}//****************************************************************************
 
-
-
 	//************ CREATES AND NAMES FILE **********************************
 	if (flags == 1) { // CREATES A READY TO WRITE FILE
 		open_files_stack[F_DESCRIPTOR]._FLAG_ = 1; // O_RDWR = 3
@@ -153,7 +151,15 @@ int b_open (char *filename, int flags) {
 		loc_temp_buff = NULL;
 		ACTIVE_FILES++;
 	}
-	return open_files_stack[F_DESCRIPTOR].file_descriptor; // File descriptor is the location (index) of current file in the File Stack
+	
+	// we need a negative return value for when a file is not found
+	// Ill leave that up to you
+	//	 if (success) return open_files_stack[F_DESCRIPTOR].file_descriptor esle return -1 		//
+	
+	int r_file_des = open_files_stack[F_DESCRIPTOR].file_descriptor;
+	
+	
+	return r_file_des; // File descriptor is the location (index) of current file in the File Stack
 }
 
 /*
