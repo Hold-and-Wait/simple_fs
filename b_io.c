@@ -57,6 +57,8 @@ sector_info sector_var_x;
 int add_leftover_to_list_node = 0;
 int null_char = 0;
 
+int ACTIVE_FILES = 0;
+
 //*********************  variables b_seek ***************************
 Node *temp_list_and_file_cpy = NULL;
 Node *temp_list_first_part = NULL;
@@ -111,6 +113,7 @@ int b_open (char *filename, int flags) {
 	if (flags == 1) { // CREATES A READY TO WRITE FILE
 		open_files_stack[F_DESCRIPTOR]._FLAG_ = 1; // O_RDWR = 3
 		open_files_stack[F_DESCRIPTOR].file_name = filename;
+		ACTIVE_FILES++;
 		return open_files_stack[F_DESCRIPTOR].file_descriptor;
 	}
 
@@ -148,6 +151,7 @@ int b_open (char *filename, int flags) {
 		}//************ LOAD DATA FROM LBA TO A NODE LIST **********************************
 		free(loc_temp_buff);
 		loc_temp_buff = NULL;
+		ACTIVE_FILES++;
 	}
 	return open_files_stack[F_DESCRIPTOR].file_descriptor; // File descriptor is the location (index) of current file in the File Stack
 }
@@ -768,6 +772,7 @@ void start_up (){
 void b_close (int file_d){
 	if(open_files_stack[file_d]._FLAG_ == 0 ){ // 0 for reading
 		open_files_stack[file_d].file_descriptor = -1;
+		ACTIVE_FILES--;
 		reset_read_io_vars();
 		printf("F0\n");
 	}  else if (open_files_stack[file_d]._FLAG_ == 1){
@@ -795,18 +800,24 @@ void b_close (int file_d){
 		updated_meta->file_size = f_size; // increment file size
 		dir_modify_meta(directory, updated_meta);
 		reset_write_io_vars();
+		ACTIVE_FILES--;
 
 	}
-	open_files_stack[file_d].sector_tracker = 0;
-	open_files_stack[file_d].file_selector = 0;
-	//free(sector_var_x.buff_sector);
-	sector_var_x.buff_sector = NULL;
-	open_files_stack[file_d].file_descriptor = -1;
-	if(open_files_stack[file_d].file_data != NULL)
-		deleteList(&open_files_stack[file_d].file_data);
-	open_files_stack[file_d].file_data = NULL;
+
+
+	if(ACTIVE_FILES == 0){
+		open_files_stack[file_d].sector_tracker = 0;
+		open_files_stack[file_d].file_selector = 0;
+		//free(sector_var_x.buff_sector);
+		sector_var_x.buff_sector = NULL;
+		open_files_stack[file_d].file_descriptor = -1;
+		if(open_files_stack[file_d].file_data != NULL)
+			deleteList(&open_files_stack[file_d].file_data);
+		open_files_stack[file_d].file_data = NULL;
+	}
 	printf("\n\n ** FILE DESCRIPTOR %d SUCCESSFULLY FREED ** \n\n", file_d);
 	return;
 }
+
 
 
