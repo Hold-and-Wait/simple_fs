@@ -74,7 +74,7 @@ int write_long_bytes(int file_d, char *caller_bfr, int bytes_to_write);
 int reload_buffer(b_io_fd f_descriptor);
 void start_up ();
 int reset_seek_io_vars();
-int reset_read_io_vars();
+int reset_read_io_vars(int file_d);
 int reset_write_io_vars();
 void load_to_node_list(int file_d);
 int B_WRITE (int file_d, char *callers_buffer, int bytes_to_write);
@@ -200,22 +200,21 @@ int b_read (b_io_fd file_d, char * buffer, int requested_bytes){
 	memset(buffer,0 , strlen(buffer));
 	if(END_OF_READ_FILE == -1){ // <-- No more bytes left to read from current open FILE
 		//add_leftover_to_list_node = -1;
-		reset_read_io_vars();
+		reset_read_io_vars(file_d);
 		return 0;
 	}
 	// CHECKS FOR VALID INPUTS AND OVERFLOW OF DATA
 	RQUSTD_BTS_CNTR += requested_bytes;
-	if(RQUSTD_BTS_CNTR > open_files_stack[file_d].file_size && RTURND_BTS_TRCKR != 0){
-		END_OF_READ_FILE = -1;
-		LOC_BUFFER_RMNG_BTS = (int)strlen(LOC_BUFFER_READ);
-		if(requested_bytes > (int)strlen(LOC_BUFFER_READ))
-			requested_bytes  = (int)strlen(LOC_BUFFER_READ);
-	} else if (RQUSTD_BTS_CNTR > open_files_stack[file_d].file_size && RTURND_BTS_TRCKR == 0){
-		requested_bytes = open_files_stack[file_d].file_size;
-	} else if (requested_bytes <= 0){
-		puts("ERROR: Invalid input...");
-		return 0;
-	}
+		if(RQUSTD_BTS_CNTR > open_files_stack[file_d].file_size && RTURND_BTS_TRCKR != 0){
+			END_OF_READ_FILE = -1;
+			if(requested_bytes > (int)strlen(LOC_BUFFER_READ))
+				requested_bytes  = (int)strlen(LOC_BUFFER_READ);
+		} else if (RQUSTD_BTS_CNTR > open_files_stack[file_d].file_size && RTURND_BTS_TRCKR == 0){
+			requested_bytes = open_files_stack[file_d].file_size;
+		} else if (requested_bytes <= 0){
+			puts("ERROR: Invalid input...");
+			return 0;
+		}
 	// BEGIN FILE READING EXECUTION
 	if (ACTVE_OPN_FILE_LOCK == 0){ 							 //   CLIENT INTITAL CALL IN THE CASE WHEN "requested_bytes" IS LESS THAN 512
 		LOC_BUFFER_READ = (char*)malloc(B_CHUNK_SIZE + 1);
@@ -364,7 +363,7 @@ int b_write (int file_d, char *callers_buffer, int bytes_to_write){
 				B_SEEK_LOCK_X = 0;
 				deleteList(&temp_list_and_file_cpy);
 				temp_list_and_file_cpy = NULL;
-				reset_read_io_vars();
+				reset_read_io_vars(file_d);
 				open_files_stack[file_d].file_size = newFilepSize ;
 				return returnd_written_bts;
 			}
@@ -389,7 +388,7 @@ int b_write (int file_d, char *callers_buffer, int bytes_to_write){
 		B_SEEK_LOCK_X = 0;
 		deleteList(&temp_list_and_file_cpy);
 		temp_list_and_file_cpy = NULL;
-		reset_read_io_vars();
+		reset_read_io_vars(file_d);
 		open_files_stack[file_d].file_size = newFilepSize ;
 		return returnd_written_bts;
 	} else 	if(B_SEEK_LOCK_X == 2){ // Will execute when B_SEEK_LOCK_X = 2 : mode = 1: inserts anywhere in the file
@@ -418,14 +417,14 @@ int b_write (int file_d, char *callers_buffer, int bytes_to_write){
 		temp_list_second_part = NULL;
 		temp_list_first_part = NULL;
 		temp_list_and_file_cpy = NULL;
-		reset_read_io_vars();
+		reset_read_io_vars(file_d);
 		reset_seek_io_vars();
 		B_SEEK_LOCK_X = 0;
 		open_files_stack[file_d].file_size = newFilepSize + bytes_to_write;*/
 		return returnd_written_bts;
 	} else if (B_SEEK_LOCK_X == 3) { // ----------- Will execute when B_SEEK_LOCK_X = 3 : mode = 2 : Will append bytes to the end of the file
 		if (B_SEEK_LOCK_MODE03 == 0){
-			//		reset_read_io_vars();
+			//		reset_read_io_vars(file_d);
 			int node_size = get_list_size(temp_list_and_file_cpy);
 			for (int var = 0; var < node_size; ++var) {
 				Node* temp_head = getNthNode(temp_list_and_file_cpy, var);
@@ -438,7 +437,7 @@ int b_write (int file_d, char *callers_buffer, int bytes_to_write){
 		if((int)strlen(LOC_STRG_BUFF_WR) > 0)load_to_node_list(file_d);
 		deleteList(&temp_list_and_file_cpy);
 		temp_list_and_file_cpy = NULL;
-		reset_read_io_vars();
+		reset_read_io_vars(file_d);
 		reset_seek_io_vars();
 		B_SEEK_LOCK_X = 0;
 		open_files_stack[file_d].file_size = newFilepSize + bytes_to_write;
@@ -526,7 +525,7 @@ int b_seek(int file_d, signed int selector, int mode){ // mode: 0 = beginning of
 	// CASE: 1 Reading
 	if( open_files_stack[file_d]._FLAG_ == 0 || open_files_stack[file_d]._FLAG_ == 3){ // B_SEEK() READ
 		if (mode == 0){ // Jumps selector to a specific position within current open file <----
-			reset_read_io_vars();
+			reset_read_io_vars(file_d);
 			read_bytes = b_read (file_d, loc_temp_buff, selector);
 		} else if (mode == 1){
 			read_bytes = b_read (file_d, loc_temp_buff, selector);
@@ -539,7 +538,7 @@ int b_seek(int file_d, signed int selector, int mode){ // mode: 0 = beginning of
 	}
 	// CASE 2:  writing flag = 1
 	if( open_files_stack[file_d]._FLAG_ == 1){ 								// B_SEEK() WRITE : 3-modes: 0 , 1, 2
-		reset_read_io_vars();
+		reset_read_io_vars(file_d);
 		int temp_list_i = get_list_size(open_files_stack[file_d].file_data);//	B_SEEK_SLCTR_LNGTH = selector;
 		for (int var = 0; var < temp_list_i; ++var) {
 			Node *temp_head = getNthNode(open_files_stack[file_d].file_data, var);	// Make a copy of current open file
@@ -554,7 +553,7 @@ int b_seek(int file_d, signed int selector, int mode){ // mode: 0 = beginning of
 		open_files_stack[file_d].file_data = NULL;
 		//case 1: mode = 0
 		if (mode == 0){ // Append at the beginning of file when selector is less than 512
-			reset_read_io_vars();
+			reset_read_io_vars(file_d);
 			B_SEEK_LOCK_X = 1;
 			return B_SEEK_SLCTR_LNGTH;
 			//case: 1
@@ -596,7 +595,7 @@ int b_seek(int file_d, signed int selector, int mode){ // mode: 0 = beginning of
 				}
 				//	printList(temp_list_second_part);                              //========================= PRINT
 				reset_write_io_vars();
-				reset_read_io_vars();
+				reset_read_io_vars(file_d);
 				B_SEEK_LOCK_X = 2;
 				return get_file_size(temp_list_first_part) + B_SEEK_SLCTR_LNGTH;
 			} else if (num_sectors > 0){ // MODE 1 insert in a posi5ion larger beyond 512 Append at any position within current open file when selector is larger than 512
@@ -652,7 +651,7 @@ int b_seek(int file_d, signed int selector, int mode){ // mode: 0 = beginning of
 				deleteList(&open_files_stack[file_d].file_data);
 				open_files_stack[file_d].file_data = NULL;
 				reset_write_io_vars();
-				reset_read_io_vars();
+				reset_read_io_vars(file_d);
 				B_SEEK_LOCK_X = 2;
 				read_bytes = get_file_size(temp_list_first_part)+ B_SEEK_SLCTR_LNGTH;
 				return read_bytes;
@@ -662,7 +661,7 @@ int b_seek(int file_d, signed int selector, int mode){ // mode: 0 = beginning of
 		if (mode == 2){   // Appends bytes at a position X bytes backward/forward from the end of file
 			int selector_pos = get_file_size(temp_list_and_file_cpy) + selector;
 			reset_write_io_vars();
-			reset_read_io_vars();
+			reset_read_io_vars(file_d);
 			B_SEEK_LOCK_X = 3;
 			return selector_pos;
 		}
@@ -699,9 +698,9 @@ int reload_buffer(b_io_fd f_descriptor){
 	}
 	memcpy(LOC_BUFFER_READ, current->data.buff_sector, current->data.sector_size);
 	if(current->data.sector_size < B_CHUNK_SIZE ) {
+		LOC_BUFFER_RMNG_BTS = current->data.sector_size;
 		LINKEDLIST_LASTNODE = 0;
 	}
-
 	open_files_stack[f_descriptor].sector_tracker++;
 	return current->data.sector_size;
 }	//End of reload_buffer
@@ -709,7 +708,7 @@ int reload_buffer(b_io_fd f_descriptor){
  * Resets local variables to its initial values
  * Frees up current file descriptor
  */
-int reset_read_io_vars(){
+int reset_read_io_vars(file_d){
 	F_DATA_LBAiNIT_POS = 0;
 	ACTVE_OPN_FILE_LOCK = 0;
 	LOCAL_BUF_CURSOR = 0;
@@ -722,6 +721,8 @@ int reset_read_io_vars(){
 	WRT_THIS_TO_buffer = 0;
 	RQUSTD_BTS_CNTR = 0;
 	RTURND_BTS_TRCKR = 0;
+	open_files_stack[file_d].file_selector = 0;
+	open_files_stack[file_d].sector_tracker = 0;
 	return 0;
 }
 /*
@@ -782,6 +783,8 @@ void b_close (int file_d){
 		open_files_stack[file_d].file_data = NULL;
 		printf("F0\n");
 	}  else if (open_files_stack[file_d]._FLAG_ == 1){
+
+
 		printf("F1\n");
 		if(LOC_STRG_BUFF_WR != NULL && (int)strlen(LOC_STRG_BUFF_WR) > 0)
 			load_to_node_list(file_d);
@@ -791,28 +794,38 @@ void b_close (int file_d){
 			directory = fs_opendir(open_files_stack[file_d].file_name);
 		}
 		struct fs_diriteminfo * updated_meta = fs_readdir(directory);
+
+
 		// Data will be transfered to LBA
 		int get_nodes_qty = get_list_size(open_files_stack[file_d].file_data);
 		int f_size = 0;
 		printf("NODE QTY IN b_close: %d\n", get_nodes_qty);
+
 		for (int var = 0; var < get_nodes_qty; ++var) {
 			Node *temp = getNthNode(open_files_stack[file_d].file_data, var);
 			LBAwrite(temp->data.buff_sector, 1, directory->directoryStartLocation+1 + var);        // <======================== WE need the exact location
-			printf("\n::: %s %d\n", temp->data.buff_sector, temp->data.sector_size);
+		//	printf("\n::: %s %d\n", temp->data.buff_sector, temp->data.sector_size);
 			f_size += temp->data.sector_size;
 		}
+
+
 		updated_meta->file_size = f_size; // increment file size
 		dir_modify_meta(directory, updated_meta);
 		reset_write_io_vars();
+
 		ACTIVE_FILES--;
+
 		open_files_stack[file_d].sector_tracker = 0;
 		open_files_stack[file_d].file_selector = 0;
+
 		open_files_stack[file_d].file_descriptor = -1;
 		if(open_files_stack[file_d].file_data != NULL)
 			deleteList(&open_files_stack[file_d].file_data);
 		open_files_stack[file_d].file_data = NULL;
 
+
 	}
+
 
 	if(ACTIVE_FILES == 0){
 		free(sector_var_x.buff_sector);
@@ -822,6 +835,7 @@ void b_close (int file_d){
 	printf("\n\n ** FILE DESCRIPTOR %d SUCCESSFULLY FREED ** \n\n", file_d);
 	return;
 }
+
 
 
 
