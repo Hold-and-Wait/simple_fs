@@ -124,7 +124,7 @@
 #define CMDMV_ON	1
 #define CMDMD_ON	1
 #define CMDRM_ON	1
-#define CMDCP2L_ON	1
+#define CMDCP2L_ON	0
 #define CMDCP2FS_ON	1
 #define CMDCD_ON	1
 #define CMDPWD_ON	1
@@ -345,8 +345,8 @@ int cmd_cp (int argcnt, char *argvec[])
 		}
 	
 	
-	testfs_src_fd = b_open (src, O_RDONLY);
-	testfs_dest_fd = b_open (dest, O_WRONLY | O_CREAT | O_TRUNC);
+	testfs_src_fd = b_open (src, 1);
+	testfs_dest_fd = b_open (dest, 1);
 	do 
 		{
 		readcnt = b_read (testfs_src_fd, buf, BUFFERLEN);
