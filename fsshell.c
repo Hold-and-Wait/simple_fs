@@ -435,35 +435,34 @@ int cmd_rm (int argcnt, char *argvec[])
 ****************************************************/
 int cmd_cp2l (int argcnt, char *argvec[])
 	{
-#if (CMDCP2L_ON == 1)				
-	int testfs_fd;
+#if (CMDCP2L_ON == 1)
+    int testfs_fd;
 	int linux_fd;
 	char * src;
 	char * dest;
 	int readcnt;
 	char buf[BUFFERLEN];
-	
+
 	switch (argcnt)
 		{
 		case 2:	//only one name provided
 			src = argvec[1];
 			dest = src;
 			break;
-			
+
 		case 3:
 			src = argvec[1];
 			dest = argvec[2];
 			break;
-		
+
 		default:
 			printf("Usage: cp2l srcfile [Linuxdestfile]\n");
 			return (-1);
 		}
-	
-	
-	testfs_fd = b_open (src, 0);
+    //int n = b_open("text.txt", 1);
+	testfs_fd = b_open (src, 1 );
 	linux_fd = open (dest, O_WRONLY | O_CREAT | O_TRUNC);
-	do 
+	do
 		{
 		readcnt = b_read (testfs_fd, buf, BUFFERLEN);
 		write (linux_fd, buf, readcnt);
@@ -775,8 +774,11 @@ int main (int argc, char * argv[])
     //retVal = initSuperBlock(filename, &volumeSize, &blockSize);
 	beginFSInit(filename, &volumeSize, &blockSize, sbPtr, bitmap_vec);
 
-	//char * buf_t = malloc(512);
-
+	char * buf_t = malloc(512);
+    for (int i = 100; i < 120; i++) {
+        LBAread(buf_t, 1, i);
+        //printf("\n[LBA %d]\n%s\n", i, buf_t);
+    }
 	while (1)
 		{
 

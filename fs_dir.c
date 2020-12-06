@@ -1054,7 +1054,6 @@ fdDir * fs_opendir(const char *name) {
         return NULL;
 
 
-
     fdDir * tableptr = dir_table;
     fdDir * init_dir = dir_stream;
 

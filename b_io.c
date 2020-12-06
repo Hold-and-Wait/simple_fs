@@ -159,7 +159,6 @@ void start_up (){
  */
 int b_open (char *filename, int flags) {
 
-
     //************ INITIALIZE STACK & PROVIDE FILE DESCRIPTOR************************
     int temp_loc_fd = 0;
     if(IS_STACK_INIT == 0) start_up();	//<--Initialize Files Stack--->F_INFO open_files_stack [ MAX_TABLE_SIZE ];
@@ -174,7 +173,6 @@ int b_open (char *filename, int flags) {
             break;
         }
     }//****************************************************************************
-
 
     //************ CREATES AND NAMES FILE **********************************
 
@@ -194,18 +192,13 @@ TIME: 12:30:44
     */
 
     // Notify directory
-    printf("NEW FILE-\n");
-
     fdDir * directory = fs_opendir(filename);
-    printf("NEW FILE3\n");
 
     if (directory == NULL) { // File does not exist, create a new directory entry
 
         fs_mkfile(filename, 100); // a file that takes up 100 blocks
-        printf("NEW FIL32E\n");
 
         directory = fs_opendir(filename);
-        printf("NEW FILE\n");
 
     }
 
@@ -216,6 +209,7 @@ TIME: 12:30:44
     open_files_stack[temp_loc_fd]._FLAG_ = flags;
     open_files_stack[temp_loc_fd].sectors_qty = meta->d_reclen;
     open_files_stack[temp_loc_fd].file_name = meta->d_name;
+
 
     if (flags == 1){ // CREATES A READY TO WRITE FILE
         open_files_stack[F_DESCRIPTOR]._FLAG_ = 1; // O_RDWR = 3
@@ -366,13 +360,15 @@ int b_read (b_io_fd file_d, char * buffer, int requested_bytes) {
     }
     // BEGIN FILE READING EXECUTION
     if (ACTVE_OPN_FILE == 0){ 							 //   CLIENT INTITAL CALL IN THE CASE WHEN "requested_bytes" IS LESS THAN 512
-
         LOC_BUFFER_READ = (char*)malloc(B_CHUNK_SIZE + 1);
         if(LOC_BUFFER_READ == NULL ){
             printf(MALLOC_ERR_MESS);
             return -1;
         }											        // requested bytes = 100
+
+        // ** The following line is causing seg fault:
         LOC_BUFFER_RMNG_BTS = reload_buffer(file_d);    // routine one: READ_BYTES = 512
+
         WRT_THIS_TO_buffer = LOC_BUFFER_RMNG_BTS;
         ACTVE_OPN_FILE = 1;
     }
