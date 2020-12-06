@@ -124,7 +124,7 @@
 #define CMDMV_ON	1
 #define CMDMD_ON	1
 #define CMDRM_ON	1
-#define CMDCP2L_ON	0
+#define CMDCP2L_ON	1
 #define CMDCP2FS_ON	1
 #define CMDCD_ON	1
 #define CMDPWD_ON	1
@@ -460,15 +460,18 @@ int cmd_cp2l (int argcnt, char *argvec[])
 			return (-1);
 		}
     //int n = b_open("text.txt", 1);
-	testfs_fd = b_open (src, 1 );
+	testfs_fd = b_open (src, 0);
 	linux_fd = open (dest, O_WRONLY | O_CREAT | O_TRUNC);
 	do
 		{
 		readcnt = b_read (testfs_fd, buf, BUFFERLEN);
+		//printf("BUF READ: %s\n", buf); // TEST TO SEE IF BUFFER CONTAINS ANYTHING
 		write (linux_fd, buf, readcnt);
 		} while (readcnt == BUFFERLEN);
+	printf("!#@!@#!@\n");
 	b_close (testfs_fd);
-	close (linux_fd);
+
+    close (linux_fd);
 	return 0;
 #endif
 	}
@@ -502,9 +505,9 @@ int cmd_cp2fs (int argcnt, char *argvec[])
 			printf("Usage: cp2fs Linuxsrcfile [destfile]\n");
 			return (-1);
 		}
-	
-	
+
 	testfs_fd = b_open (dest, 1);
+
 	linux_fd = open (src, O_RDONLY);
 	do 
 		{
@@ -689,7 +692,6 @@ void processcommand (char * cmd)
 				break;
 			}
 		}
-		
 #ifdef COMMAND_DEBUG
 	for (i = 0; i < cmdc; i++)
 		{
@@ -697,7 +699,7 @@ void processcommand (char * cmd)
 		}
 #endif		
 	cmdv[cmdc] = 0;		//just be safe - null terminate array of arguments
-	
+    printf("DEB\n");
 	for (i = 0; i < dispatchcount; i++)
 		{
 		if (strcmp(dispatchTable[i].command, cmdv[0]) == 0)
@@ -709,7 +711,7 @@ void processcommand (char * cmd)
 			}
 		}
 	printf("%s is not a regonized command.\n", cmdv[0]);
-	cmd_help(cmdc, cmdv);	
+	cmd_help(cmdc, cmdv);
 	free (cmdv);
 	cmdv = NULL;
 	}
@@ -777,7 +779,7 @@ int main (int argc, char * argv[])
 	char * buf_t = malloc(512);
     for (int i = 100; i < 120; i++) {
         LBAread(buf_t, 1, i);
-        //printf("\n[LBA %d]\n%s\n", i, buf_t);
+        printf("\n[LBA %d]\n%s\n", i, buf_t);
     }
 	while (1)
 		{
@@ -799,7 +801,7 @@ int main (int argc, char * argv[])
 			// exit while loop and terminate shell
 			break;
 			}
-			
+
 		if ((cmd != NULL) && (strlen(cmd) > 0))
 			{
 			he = history_get(history_length);
@@ -809,7 +811,7 @@ int main (int argc, char * argv[])
 				}
 			processcommand (cmd);
 			}
-				
+
 		free (cmd);
 		cmd = NULL;		
 		} // end while

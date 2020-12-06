@@ -1,5 +1,5 @@
 /**************************************************************
-* Class:  CSC-415-0# 
+* Class:  CSC-415-0# Hold & Wait (testing only)
 * Name:
 * Student ID:
 * Project: File System Project
