@@ -124,7 +124,7 @@
 #define CMDMV_ON	1
 #define CMDMD_ON	1
 #define CMDRM_ON	1
-#define CMDCP2L_ON	0
+#define CMDCP2L_ON	1
 #define CMDCP2FS_ON	1
 #define CMDCD_ON	1
 #define CMDPWD_ON	1
@@ -461,7 +461,7 @@ int cmd_cp2l (int argcnt, char *argvec[])
 		}
 	
 	
-	testfs_fd = b_open (src, O_RDONLY);
+	testfs_fd = b_open (src, 0);
 	linux_fd = open (dest, O_WRONLY | O_CREAT | O_TRUNC);
 	do 
 		{
@@ -775,14 +775,11 @@ int main (int argc, char * argv[])
     //retVal = initSuperBlock(filename, &volumeSize, &blockSize);
 	beginFSInit(filename, &volumeSize, &blockSize, sbPtr, bitmap_vec);
 
-	char * buf_t = malloc(512);
+	//char * buf_t = malloc(512);
 
 	while (1)
 		{
-            for (int i = 100; i < 120; i++) {
-                LBAread(buf_t, 1, i);
-                //printf("\n[LBA %d]\n%s\n", i, buf_t);
-            }
+
 		cmdin = readline("Prompt > ");
 #ifdef COMMAND_DEBUG
 		printf ("%s\n", cmdin);
