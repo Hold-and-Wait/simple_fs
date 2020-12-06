@@ -510,7 +510,8 @@ int cmd_cp2fs (int argcnt, char *argvec[])
 		}
 
 	testfs_fd = b_open (dest, 1);
-
+    if (testfs_fd == -1)
+        return -1;
 	linux_fd = open (src, O_RDONLY);
 	do 
 		{

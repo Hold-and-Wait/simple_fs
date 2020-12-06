@@ -119,8 +119,7 @@ int b_open (char *filename, int flags) {
 		// Notify directory
 		fdDir * directory = fs_opendir(filename);
 		if (directory == NULL || directory->inode == 0) { // File does not exist, create a new directory entry
-			fs_mkfile(filename, 100); // a file that takes up 100 blocks
-			directory = fs_opendir(filename);
+		    return -1; // File does not exit
 		}
 		struct fs_diriteminfo * meta = fs_readdir(directory);
 		open_files_stack[temp_loc_fd].location = directory->directoryStartLocation;
