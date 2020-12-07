@@ -91,8 +91,19 @@ int caller_bffrs_CURSOR = 0, WRT_THIS_TO_buffer = 0,  LOCAL_BUF_CURSOR = 0;
  * Returns -1 if  file does not exist
  */
 int b_open (char *filename, int flags) {
-
-
+	
+	// SUPORTING THE FOLLOWING FLAGS: (O_WRONLY), (O_WRONLY | O_CREAT | O_TRUNC), (O_CREAT | O_WRONLY), (O_CREAT | O_RDWR, O_RDONLY), 0 and 1
+	// check for flag to create a file
+	if (flags == 1 || flags == O_WRONLY || flags == (O_WRONLY | O_CREAT | O_TRUNC)
+			|| flags == (O_CREAT | O_WRONLY)|| (flags == (O_CREAT | O_RDWR))
+			||  (flags == O_CREAT)){
+		flags = 1;
+	} else if (flags == O_RDONLY){
+		flags = 0;
+	} else {
+		puts("** CHECK FILE FLAGS **");
+		return -1;
+	}
 
 	//************ INITIALIZE STACK & PROVIDE FILE DESCRIPTOR************************
 	int temp_loc_fd = 0;
@@ -150,15 +161,9 @@ int b_open (char *filename, int flags) {
 		loc_temp_buff = NULL;
 		ACTIVE_FILES++;
 	}
-	
-	// we need a negative return value for when a file is not found
-	// Ill leave that up to you
-	//	 if (success) return open_files_stack[F_DESCRIPTOR].file_descriptor esle return -1 		//
-	
-	int r_file_des = open_files_stack[F_DESCRIPTOR].file_descriptor;
-	
-	
-	return r_file_des; // File descriptor is the location (index) of current file in the File Stack
+
+		
+	return open_files_stack[F_DESCRIPTOR].file_descriptor; // File descriptor is the location (index) of current file in the File Stack
 }
 
 /*
